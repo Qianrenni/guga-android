@@ -5,8 +5,8 @@ import com.qianrenni.reading.data.model.ForgotPasswordRequest
 import com.qianrenni.reading.data.model.UpdatePasswordRequest
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.client.request.patch
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -29,7 +29,7 @@ object UserService {
             contentType(ContentType.Application.Json)
         }.body()
     }
-    
+
     suspend fun resetPassword(
         request: ForgotPasswordRequest
     ): ApiResponse<Nothing> {

@@ -1,4 +1,5 @@
 package com.qianrenni.reading
+
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,7 +22,7 @@ fun AppNavigation() {
         composable(
             route = "home"
         ) {
-            HomeView(navController=navController)
+            HomeView(navController = navController)
         }
     }
 }
