@@ -41,17 +41,11 @@ class HomeViewModel : ViewModel() {
 
         _uiState.value = current.copy(
             selectedCategory = category,
-            books = if (category.isEmpty()) {
-                // 全部书籍：合并所有缓存
-                categoryBooksCache.values.flatten().distinctBy { it.id }
-            } else {
-                categoryBooksCache[category] ?: emptyList()
-            },
+            books = categoryBooksCache[category] ?: emptyList(),
             scrollToTop = true,
             isError = false,
             errorMessage = ""
         )
-
         // 如果该分类未加载过，自动加载
         if (category.isEmpty() || categoryBooksCache[category].isNullOrEmpty()) {
             loadBooksByCategory(category, offset = 0)
@@ -70,104 +64,70 @@ class HomeViewModel : ViewModel() {
     private fun loadCategories() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, isError = false) }
-
-            try {
-                val result = BookService.getCategories()
-                result.onSuccess { categories ->
-                    val sorted = categories.sortedBy { it.length }
-                    _uiState.update {
-                        it.copy(
-                            categories = sorted,
-                            isLoading = false,
-                            selectedCategory = "", //
-                            isError = false
-                        )
-                    }
-                    loadBooksByCategory("", offset = 0)
+            val result = BookService.getCategories()
+            result.onSuccess { categories ->
+                val sorted = categories.sortedBy { it.length }
+                _uiState.update {
+                    it.copy(
+                        categories = sorted,
+                        isLoading = false,
+                        selectedCategory = "", //
+                        isError = false
+                    )
                 }
-                result.onFailure { message, _, _ ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isError = true,
-                            errorMessage = message
-                        )
-                    }
-                    Log.e("HomeVM", "Load categories failed $message")
-                }
-            } catch (e: Exception) {
+                selectCategory(sorted.first())
+            }
+            result.onFailure { message, _, _ ->
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         isError = true,
-                        errorMessage = e.message ?: "未知错误"
+                        errorMessage = message
                     )
                 }
-                Log.e("HomeVM", "Load categories exception", e)
+                Log.e("HomeVM", "Load categories failed $message")
             }
         }
     }
 
     private fun loadBooksByCategory(category: String, offset: Int) {
         viewModelScope.launch {
-            if (offset == 0) {
-                _uiState.update { it.copy(isLoading = true, isError = false) }
+            _uiState.update { it.copy(isLoading = true, isError = false) }
+
+            val result = BookService.getBooksByCategory(category, offset, LIMIT)
+            result.onSuccess { books ->
+                if (books.isNotEmpty()) {
+                    val cache = categoryBooksCache.getOrPut(category) { mutableListOf() }
+                    val newBooks = books.filter { newBook ->
+                        cache.none { it.id == newBook.id }
+                    }
+                    cache.addAll(newBooks)
+                    categoryCursors[category] = offset + books.size
+
+                    if (category == _uiState.value.selectedCategory) {
+                        _uiState.update { item ->
+                            item.copy(
+                                books = categoryBooksCache[category] ?: emptyList(),
+                                isLoading = false,
+                                isError = false
+                            )
+                        }
+                    }
+                } else {
+                    // 标记分类已加载完毕
+                    categoryFinished[category] = true
+                    _uiState.update { it.copy(isLoading = false) }
+                }
             }
-
-            try {
-                val result = BookService.getBooksByCategory(category, offset, LIMIT)
-                result.onSuccess { books ->
-                    if (books.isNotEmpty()) {
-                        val cache = categoryBooksCache.getOrPut(category) { mutableListOf() }
-                        val newBooks = books.filter { newBook ->
-                            cache.none { it.id == newBook.id }
-                        }
-                        cache.addAll(newBooks)
-                        categoryCursors[category] = offset + books.size
-
-                        if (category == _uiState.value.selectedCategory ||
-                            (_uiState.value.selectedCategory.isEmpty() && category.isEmpty())
-                        ) {
-                            _uiState.update { item ->
-                                item.copy(
-                                    books = if (category.isEmpty()) {
-                                        // 全部模式：合并所有缓存
-                                        categoryBooksCache.values.flatten()
-                                            .distinctBy { it.id }
-                                            .sortedByDescending { it.created_at }
-                                    } else {
-                                        cache.toList()
-                                    },
-                                    isLoading = false,
-                                    isError = false
-                                )
-                            }
-                        }
-                    } else {
-                        // 标记分类已加载完毕
-                        categoryFinished[category] = true
-                        _uiState.update { it.copy(isLoading = false) }
-                    }
-                }
-                result.onFailure { message, _, _ ->  // ✅ 修复参数
-                    _uiState.update { item ->
-                        item.copy(
-                            isLoading = false,
-                            isError = true,
-                            errorMessage = message
-                        )
-                    }
-                    Log.e("HomeVM", "Load books failed: $message")
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
+            result.onFailure { message, _, _ ->  // 修复参数
+                _uiState.update { item ->
+                    item.copy(
                         isLoading = false,
                         isError = true,
-                        errorMessage = e.message ?: "未知错误"
+                        errorMessage = message
                     )
                 }
-                Log.e("HomeVM", "Load books exception", e)
+                Log.e("HomeVM", "Load books failed: $message")
             }
         }
     }
@@ -181,6 +141,6 @@ class HomeViewModel : ViewModel() {
     }
 
     companion object {
-        private const val LIMIT = 25
+        private const val LIMIT = 10
     }
 }
