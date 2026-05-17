@@ -130,9 +130,8 @@ class BookReadViewModel(
     fun toggleCatalog() {
         _uiState.update {
             it.copy(
-                showCatalog = !_uiState.value.showCatalog,
-                showSettings = false,
-                showBottomControls = false
+                showCatalog = !it.showCatalog,
+                showSettings = false
             )
         }
     }
@@ -140,9 +139,8 @@ class BookReadViewModel(
     fun toggleSettings() {
         _uiState.update {
             it.copy(
-                showSettings = !_uiState.value.showSettings,
-                showCatalog = false,
-                showBottomControls = false
+                showSettings = !it.showSettings,
+                showCatalog = false
             )
         }
     }
@@ -150,7 +148,7 @@ class BookReadViewModel(
     fun toggleBottomControls() {
         _uiState.update {
             it.copy(
-                showBottomControls = !_uiState.value.showBottomControls,
+                showBottomControls = !it.showBottomControls,
                 showCatalog = false,
                 showSettings = false
             )
