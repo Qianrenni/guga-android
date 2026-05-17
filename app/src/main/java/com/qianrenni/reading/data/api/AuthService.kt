@@ -1,5 +1,6 @@
 package com.qianrenni.reading.data.api
 
+import android.util.Log
 import com.qianrenni.reading.data.model.EmailVerifyRequest
 import com.qianrenni.reading.data.model.LoginRequest
 import com.qianrenni.reading.data.model.LoginResponse
@@ -14,13 +15,20 @@ object AuthService {
     private var lastXCaptchaId: String? = ""
 
     suspend fun getCaptcha(): NetworkResult<ByteArray> {
-        val response = NetworkClient.client.get("${NetworkClient.getBaseUrl()}captcha/get")
-        this.lastXCaptchaId = response.headers["X-Captcha-Id"]
-        return NetworkResult(
-            success = true,
-            data = response.body<ByteArray>(),
-            message = "操作成功"
-        )
+        return try {
+            val response = NetworkClient.client.get("${NetworkClient.getBaseUrl()}captcha/get")
+            this.lastXCaptchaId = response.headers["X-Captcha-Id"]
+            val image = response.body<ByteArray>()
+            Log.d("captcha", "getCaptcha:${image.size} ")
+            NetworkResult.Success(
+                data = image,
+            )
+        } catch (e: Exception) {
+            return NetworkResult.Failure(
+                message = e.message ?: "Unknown Error",
+                code = 500
+            )
+        }
     }
 
     suspend fun login(

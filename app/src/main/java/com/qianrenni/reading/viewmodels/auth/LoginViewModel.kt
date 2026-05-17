@@ -1,9 +1,9 @@
 package com.qianrenni.reading.viewmodels.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.data.api.AuthService
-import com.qianrenni.reading.data.api.action
 import com.qianrenni.reading.data.model.LoginRequest
 import com.qianrenni.reading.data.store.AuthStore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,19 +36,14 @@ class LoginViewModel : ViewModel() {
 
     fun refreshCaptcha() {
         viewModelScope.launch {
-            try {
-                val result = AuthService.getCaptcha()
-                result.action(
-                    onSuccess = { res ->
-                        _captchaBytes.update { res.data }
-                    },
-                    onFailure = { res ->
-                        // 可以在这里处理错误，比如显示提示信息
-                        println("获取验证码失败: ${res.message}")
-                    }
-                )
-            } catch (e: Exception) {
-                println("获取验证码异常: ${e.message}")
+            val result = AuthService.getCaptcha()
+            result.onSuccess { data ->
+                _captchaBytes.update { data }
+            }
+            result.onFailure { msg, code, err ->
+                Log.d("LOGIN VIEW MODEL", "refreshCaptcha:$msg ")
+                Log.e("LOGIN VIEW MODEL", "refreshCaptcha: ", err)
+                _loginState.update { it.copy(error = msg) }
             }
         }
     }
@@ -87,23 +82,21 @@ class LoginViewModel : ViewModel() {
                     captcha = captcha
                 )
             )
-            result.action(
-                {
-                    AuthStore.setUser(it.data?.user)
-                    AuthStore.setToken(
-                        it.data?.access_token ?: "",
-                        it.data?.refresh_token ?: "",
-                        it.data?.token_type ?: "",
-                        rememberMe
-                    )
-                    _loginState.update { it.copy(isLoading = false, error = null) }
-                    onLoginSuccess()
-                },
-                { res ->
-                    _loginState.update { it.copy(isLoading = false, error = res.message) }
-                    onLoginError(res.message)
-                }
-            )
+            result.onSuccess {
+                AuthStore.setUser(it.user)
+                AuthStore.setToken(
+                    it.access_token,
+                    it.refresh_token,
+                    it.token_type,
+                    rememberMe
+                )
+                _loginState.update { it.copy(isLoading = false, error = null) }
+                onLoginSuccess()
+            }
+            result.onFailure { message, _, _ ->
+                _loginState.update { it.copy(isLoading = false, error = message) }
+                onLoginError(message)
+            }
 
         }
 

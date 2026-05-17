@@ -27,25 +27,30 @@ object AuthStore {
         val savedTokenType = prefs.getString("token_type", null)
         Log.d("TOKEN", "setToken:${savedAccessToken} ${savedRefreshToken} ${savedTokenType} ")
         if (savedAccessToken != null && savedRefreshToken != null && savedTokenType != null) {
-            NetworkClient.setToken(savedAccessToken, savedTokenType)
-            // Try to authenticate with current token
-            val authResult = AuthService.getCurrentUser()
-            if (authResult.success) {
-                setUser(authResult.data?.user)
-                return true
+            return run {
+                // 尝试 1：用旧 token 获取用户
+                NetworkClient.setToken(savedAccessToken, savedTokenType)
+                AuthService.getCurrentUser()
+                    .fold(
+                        onSuccess = {
+                            setUser(it.user)
+                            true
+                        },
+                        onFailure = { _, _, _ -> null }  // 失败继续
+                    )
+            } ?: run {
+                // 尝试 2：刷新 token
+                NetworkClient.setToken(savedRefreshToken, savedTokenType)
+                AuthService.refreshToken()
+                    .fold(
+                        onSuccess = {
+                            setUser(it.user)
+                            saveToken(prefs, it.access_token, it.refresh_token, it.token_type)
+                            true
+                        },
+                        onFailure = { _, _, _ -> false }  // 都失败了
+                    )
             }
-            // If authentication fails, try to refresh token
-            NetworkClient.setToken(savedRefreshToken, savedTokenType)
-            val refreshResult = AuthService.refreshToken()
-            if (refreshResult.success) {
-                refreshResult.data?.let {
-                    setUser(it.user)
-                    saveToken(prefs, it.access_token, it.refresh_token, it.token_type)
-                }
-                return true
-            }
-
-            return false
         }
         return false
     }

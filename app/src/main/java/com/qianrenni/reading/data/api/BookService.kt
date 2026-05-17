@@ -1,12 +1,11 @@
 package com.qianrenni.reading.data.api
 
 import com.qianrenni.reading.data.model.Book
-import com.qianrenni.reading.data.model.BookCategoryResponse
 import com.qianrenni.reading.data.model.Catalog
 import io.ktor.client.request.parameter
 
 object BookService {
-    suspend fun getCategories(): NetworkResult<BookCategoryResponse> {
+    suspend fun getCategories(): NetworkResult<List<String>> {
         return NetworkClient.get("book/category")
     }
 

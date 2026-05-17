@@ -13,11 +13,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.qianrenni.reading.components.BottomNavigationBar
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.AuthViewModel
 import com.qianrenni.reading.views.HomeView
 import com.qianrenni.reading.views.auth.LoginView
+import com.qianrenni.reading.views.book.BookShelfView
+import com.qianrenni.reading.views.book.ReadingHistoryView
+import com.qianrenni.reading.views.user.ProfileView
 
 @Composable
 fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
@@ -25,6 +30,10 @@ fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
     val excludeRoutes = listOf("login")
     val isLogin by authViewModel.isLogin.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
+
+    // 定义需要显示底部导航栏的路由
+    val routesWithBottomBar = listOf("home", "bookshelf", "history", "profile")
+
     // 2. 如果未登录，执行跳转
     LaunchedEffect(isLogin) {
         if (!isLogin) {
@@ -55,23 +64,58 @@ fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
             snackBarHostState.showSnackbar(message)
         }
     }
-    Scaffold(snackbarHost = { SnackbarHost(hostState = snackBarHostState) }) { innerPadding ->
+
+    // 获取当前路由以决定是否显示底部导航栏
+    val currentBackStackEntry = navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry.value?.destination?.route
+    val showBottomBar = currentRoute in routesWithBottomBar
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        bottomBar = {
+            if (showBottomBar) {
+                BottomNavigationBar(navController = navController)
+            }
+        }
+    ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-
-            // 详情页，带参数
+            // 登录页
             composable(
                 route = "login",
             ) {
                 LoginView()
             }
+
+            // 首页 - 书城
             composable(
                 route = "home"
             ) {
                 HomeView(navController = navController)
+            }
+
+            // 书架
+            composable(
+                route = "bookshelf"
+            ) {
+                BookShelfView(navController = navController)
+            }
+
+            // 阅读历史
+            composable(
+                route = "history"
+            ) {
+                ReadingHistoryView(navController = navController)
+            }
+
+            // 个人中心
+            composable(
+                route = "profile"
+            ) {
+                ProfileView(navController = navController)
             }
         }
     }
