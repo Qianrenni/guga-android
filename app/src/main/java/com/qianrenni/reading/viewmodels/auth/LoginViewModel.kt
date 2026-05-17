@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.data.api.AuthService
 import com.qianrenni.reading.data.model.LoginRequest
 import com.qianrenni.reading.data.store.AuthStore
+import com.qianrenni.reading.util.createWhiteImagePng
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -23,7 +24,7 @@ data class LoginState(
 class LoginViewModel : ViewModel() {
     private val _loginState = MutableStateFlow(LoginState())
     val loginState = _loginState.asStateFlow()
-    private val _captchaBytes = MutableStateFlow<ByteArray?>(null)
+    private val _captchaBytes = MutableStateFlow(createWhiteImagePng(120, 80))
     val captchaBytes = _captchaBytes.asStateFlow()
 
     init {

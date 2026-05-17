@@ -20,6 +20,7 @@ import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.AuthViewModel
 import com.qianrenni.reading.views.HomeView
 import com.qianrenni.reading.views.auth.LoginView
+import com.qianrenni.reading.views.book.BookInfoView
 import com.qianrenni.reading.views.book.BookShelfView
 import com.qianrenni.reading.views.book.ReadingHistoryView
 import com.qianrenni.reading.views.user.ProfileView
@@ -95,6 +96,17 @@ fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
                 route = "home"
             ) {
                 HomeView(navController = navController)
+            }
+
+            // 书籍详情
+            composable(
+                route = "book/{bookId}"
+            ) { backStackEntry ->
+                val bookId = backStackEntry.arguments?.getString("bookId")?.toIntOrNull() ?: 0
+                BookInfoView(
+                    navController = navController,
+                    bookId = bookId
+                )
             }
 
             // 书架

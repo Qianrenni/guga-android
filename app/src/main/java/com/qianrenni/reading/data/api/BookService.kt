@@ -39,7 +39,7 @@ object BookService {
 
     suspend fun getCatalog(
         bookId: Int
-    ): NetworkResult<Catalog> {
+    ): NetworkResult<Array<Catalog>> {
         return NetworkClient.get("book/toc/$bookId")
     }
 

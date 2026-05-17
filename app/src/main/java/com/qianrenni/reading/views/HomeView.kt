@@ -79,7 +79,7 @@ fun HomeView(
                         BookItem(
                             book = book,
                             onClick = {
-                                // navController.navigate("book/${book.id}")
+                                navController.navigate("book/${book.id}")
                             }
                         )
                     }
