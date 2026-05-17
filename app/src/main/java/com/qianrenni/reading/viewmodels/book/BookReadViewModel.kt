@@ -128,35 +128,43 @@ class BookReadViewModel(
     }
 
     fun toggleCatalog() {
-        _uiState.value = _uiState.value.copy(
-            showCatalog = !_uiState.value.showCatalog,
-            showSettings = false,
-            showBottomControls = false
-        )
+        _uiState.update {
+            it.copy(
+                showCatalog = !_uiState.value.showCatalog,
+                showSettings = false,
+                showBottomControls = false
+            )
+        }
     }
 
     fun toggleSettings() {
-        _uiState.value = _uiState.value.copy(
-            showSettings = !_uiState.value.showSettings,
-            showCatalog = false,
-            showBottomControls = false
-        )
+        _uiState.update {
+            it.copy(
+                showSettings = !_uiState.value.showSettings,
+                showCatalog = false,
+                showBottomControls = false
+            )
+        }
     }
 
     fun toggleBottomControls() {
-        _uiState.value = _uiState.value.copy(
-            showBottomControls = !_uiState.value.showBottomControls,
-            showCatalog = false,
-            showSettings = false
-        )
+        _uiState.update {
+            it.copy(
+                showBottomControls = !_uiState.value.showBottomControls,
+                showCatalog = false,
+                showSettings = false
+            )
+        }
     }
 
     fun hideAllDialogs() {
-        _uiState.value = _uiState.value.copy(
-            showCatalog = false,
-            showSettings = false,
-            showBottomControls = false
-        )
+        _uiState.update {
+            it.copy(
+                showCatalog = false,
+                showSettings = false,
+                showBottomControls = false
+            )
+        }
     }
 
     private fun reportChapterRead(chapterId: Int, eventType: String) {
