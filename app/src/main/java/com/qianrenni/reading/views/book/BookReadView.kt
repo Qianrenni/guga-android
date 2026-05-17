@@ -1,6 +1,7 @@
 package com.qianrenni.reading.views.book
 
 import android.content.Context
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,6 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Fullscreen
@@ -156,8 +159,9 @@ fun BookReadView(
 
     // 目录抽屉
     if (uiState.showCatalog && uiState.book != null) {
+        Log.d("READ", "BookReadView:CATALOG ")
         CatalogDrawer(
-            bookName = uiState.book!!.name,
+            bookName = uiState.book?.name ?: "",
             catalog = uiState.catalog,
             currentChapterId = uiState.currentChapterId,
             onChapterSelected = { chapterId -> viewModel.loadChapter(chapterId) },
@@ -167,6 +171,7 @@ fun BookReadView(
 
     // 阅读设置对话框
     if (uiState.showSettings) {
+        Log.d("READ", "BookReadView:SETTINGS ")
         ReadingSettingsDialog(
             settings = readSettings,
             onSettingsChange = { newSettings ->
@@ -185,8 +190,8 @@ private fun ChapterContent(
     settings: ReadSettings,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        content.forEach {
+    LazyColumn(modifier = modifier) {
+        items(content) {
             Text(
                 text = it,
                 fontSize = settings.fontSize.sp,

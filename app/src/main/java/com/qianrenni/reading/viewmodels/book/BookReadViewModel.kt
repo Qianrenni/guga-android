@@ -39,6 +39,9 @@ class BookReadViewModel(
     private var heartbeatJob: Job? = null
 
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
+        if (_uiState.value.isLoading || _uiState.value.book != null) {
+            return
+        }
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             val bookJob = async { BookService.getBookById(bookId) }
@@ -63,6 +66,7 @@ class BookReadViewModel(
                     loadChapter(chapterIdToLoad)
                 }
             }
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
@@ -92,6 +96,8 @@ class BookReadViewModel(
                 // 上报进入新章节
                 reportChapterRead(chapterId, "enter")
                 startHeartbeat(chapterId)
+            }.onFailure { _, _, _ ->
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
