@@ -20,12 +20,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -34,47 +29,28 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
-import com.qianrenni.reading.data.api.AuthService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.qianrenni.reading.viewmodels.auth.LoginViewModel
 
 @Composable
 fun LoginView(
-    onLoginClick: (username: String, password: String, captcha: String, rememberMe: Boolean) -> Unit = { _, _, _, _ -> },
+    onLoginSuccess: () -> Unit = {},
+    onLoginError: (String) -> Unit = {},
     onForgotPasswordClick: () -> Unit = {},
     onRegisterClick: () -> Unit = {},
     navController: NavController,
+    viewModel: LoginViewModel = viewModel()
 ) {
-    val scope = rememberCoroutineScope()
-
-    // 状态管理
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var captcha by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(true) }
-    var isLoading by remember { mutableStateOf(false) }
-
-    // 存储 ByteArray
-    var captchaBytes by remember { mutableStateOf<ByteArray?>(null) }
-
-    // 加载验证码的函数
-    val loadCaptcha: suspend () -> Unit = {
-        try {
-            val bytes = AuthService.getCaptcha()
-            captchaBytes = bytes
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    // 初始加载
-    LaunchedEffect(Unit) {
-        loadCaptcha()
-    }
+    val username by viewModel.username
+    val password by viewModel.password
+    val captcha by viewModel.captcha
+    val rememberMe by viewModel.rememberMe
+    val isLoading by viewModel.isLoading
+    val captchaBytes by viewModel.captchaBytes
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -88,7 +64,7 @@ fun LoginView(
 
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it },
+                onValueChange = { viewModel.username.value = it },
                 label = { Text("邮箱") },
                 placeholder = { Text("请输入用户邮箱") },
                 singleLine = true,
@@ -101,7 +77,7 @@ fun LoginView(
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { viewModel.password.value = it },
                 label = { Text("密码") },
                 placeholder = { Text("请输入密码") },
                 singleLine = true,
@@ -120,7 +96,7 @@ fun LoginView(
             ) {
                 OutlinedTextField(
                     value = captcha,
-                    onValueChange = { captcha = it },
+                    onValueChange = { viewModel.captcha.value = it },
                     label = { Text("验证码") },
                     placeholder = { Text("请输入验证码") },
                     singleLine = true,
@@ -139,11 +115,7 @@ fun LoginView(
                     modifier = Modifier
                         .height(80.dp)
                         .clickable(onClick = {
-                            scope.launch(
-                                Dispatchers.IO
-                            ) {
-                                loadCaptcha()
-                            }
+                            viewModel.loadCaptcha()
                         }),
                 )
             }
@@ -157,7 +129,7 @@ fun LoginView(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(
                         checked = rememberMe,
-                        onCheckedChange = { rememberMe = it },
+                        onCheckedChange = { viewModel.rememberMe.value = it },
                     )
                     Text("记住我")
                 }
@@ -168,8 +140,10 @@ fun LoginView(
 
             Button(
                 onClick = {
-                    isLoading = true
-                    onLoginClick(username, password, captcha, rememberMe)
+                    viewModel.login(
+                        onLoginSuccess = onLoginSuccess,
+                        onLoginError = onLoginError
+                    )
                 },
                 enabled = !isLoading,
                 modifier = Modifier.width(180.dp)
