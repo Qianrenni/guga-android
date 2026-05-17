@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
             AuthStore.init(this)
 
             ReadingTheme {
-                AppNavigation()
+                AppNavigation(this)
             }
         }
     }

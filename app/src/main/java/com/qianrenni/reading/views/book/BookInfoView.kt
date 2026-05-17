@@ -249,7 +249,7 @@ private fun CatalogList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        navController.navigate("book-read/$bookId/${item.id}")
+                        navController.navigate("read/$bookId/${item.id}")
                     }
                     .padding(8.dp),
                 style = MaterialTheme.typography.bodyMedium,

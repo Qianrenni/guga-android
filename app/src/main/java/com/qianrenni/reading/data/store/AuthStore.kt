@@ -27,29 +27,17 @@ object AuthStore {
         val savedTokenType = prefs.getString("token_type", null)
         Log.d("TOKEN", "setToken:${savedAccessToken} ${savedRefreshToken} ${savedTokenType} ")
         if (savedAccessToken != null && savedRefreshToken != null && savedTokenType != null) {
-            return run {
-                // 尝试 1：用旧 token 获取用户
-                NetworkClient.setToken(savedAccessToken, savedTokenType)
-                AuthService.getCurrentUser()
-                    .fold(
-                        onSuccess = {
-                            setUser(it.user)
-                            true
-                        },
-                        onFailure = { _, _, _ -> null }  // 失败继续
-                    )
-            } ?: run {
-                // 尝试 2：刷新 token
-                NetworkClient.setToken(savedRefreshToken, savedTokenType)
-                AuthService.refreshToken()
-                    .fold(
-                        onSuccess = {
-                            setUser(it.user)
-                            saveToken(prefs, it.access_token, it.refresh_token, it.token_type)
-                            true
-                        },
-                        onFailure = { _, _, _ -> false }  // 都失败了
-                    )
+            // 尝试 1：用旧 token 获取用户
+            NetworkClient.setToken(savedAccessToken, savedTokenType)
+            AuthService.getCurrentUser().onSuccess { setUser(it.user) }
+            if (_user.value != null) {
+                return true
+            }
+            // 尝试 2：刷新 token
+            NetworkClient.setToken(savedRefreshToken, savedTokenType)
+            AuthService.refreshToken().onSuccess {
+                setUser(it.user)
+                saveToken(prefs, it.access_token, it.refresh_token, it.token_type)
             }
         }
         return false

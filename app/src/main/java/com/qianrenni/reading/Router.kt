@@ -1,5 +1,6 @@
 package com.qianrenni.reading
 
+import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -21,12 +22,13 @@ import com.qianrenni.reading.viewmodels.auth.AuthViewModel
 import com.qianrenni.reading.views.HomeView
 import com.qianrenni.reading.views.auth.LoginView
 import com.qianrenni.reading.views.book.BookInfoView
+import com.qianrenni.reading.views.book.BookReadView
 import com.qianrenni.reading.views.book.BookShelfView
 import com.qianrenni.reading.views.book.ReadingHistoryView
 import com.qianrenni.reading.views.user.ProfileView
 
 @Composable
-fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
+fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) {
     val navController = rememberNavController()
     val excludeRoutes = listOf("login")
     val isLogin by authViewModel.isLogin.collectAsStateWithLifecycle()
@@ -106,6 +108,21 @@ fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
                 BookInfoView(
                     navController = navController,
                     bookId = bookId
+                )
+            }
+
+            // 阅读页面
+            composable(
+                route = "read/{bookId}/{chapterId}"
+            ) { backStackEntry ->
+                val bookId = backStackEntry.arguments?.getString("bookId")?.toIntOrNull() ?: 0
+                val chapterId =
+                    backStackEntry.arguments?.getString("chapterId")?.toIntOrNull() ?: -1
+                BookReadView(
+                    context = context,
+                    navController = navController,
+                    bookId = bookId,
+                    chapterId = chapterId
                 )
             }
 

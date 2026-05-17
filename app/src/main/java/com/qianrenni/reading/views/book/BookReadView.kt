@@ -1,0 +1,213 @@
+package com.qianrenni.reading.views.book
+
+import android.content.Context
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.graphics.toColorInt
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.qianrenni.reading.components.BottomControlBar
+import com.qianrenni.reading.components.CatalogDrawer
+import com.qianrenni.reading.components.ReadingSettingsDialog
+import com.qianrenni.reading.data.model.ReadSettings
+import com.qianrenni.reading.data.store.SettingsRepository
+import com.qianrenni.reading.viewmodels.book.BookReadViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BookReadView(
+    context: Context,
+    navController: NavController,
+    bookId: Int,
+    chapterId: Int = -1,
+    viewModel: BookReadViewModel = viewModel()
+) {
+    viewModel.loadBookAndCatalog(bookId, chapterId)
+    val uiState by viewModel.uiState.collectAsState()
+    val settingsRepository =
+        remember { SettingsRepository(context) }
+    var readSettings by remember { mutableStateOf(ReadSettings()) }
+
+    // 收集阅读设置
+    LaunchedEffect(Unit) {
+        settingsRepository.readSettings.collectLatest { settings ->
+            readSettings = settings
+        }
+    }
+    // 处理返回键
+    BackHandler(enabled = uiState.showCatalog || uiState.showSettings || uiState.showBottomControls) {
+        viewModel.hideAllDialogs()
+    }
+
+    Scaffold(
+        topBar = {
+            if (uiState.showBottomControls) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = uiState.book?.name ?: "阅读",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { /* TODO: 实现全屏 */ }) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.Fullscreen,
+                                contentDescription = "全屏"
+                            )
+                        }
+                    }
+                )
+            }
+        },
+        bottomBar = {
+            if (uiState.showBottomControls) {
+                val currentIndex =
+                    uiState.catalog.indexOfFirst { it.id == uiState.currentChapterId }
+                BottomControlBar(
+                    canGoPrevious = currentIndex > 0,
+                    canGoNext = currentIndex < uiState.catalog.size - 1 && currentIndex >= 0,
+                    onPreviousClick = { viewModel.goToPreviousChapter() },
+                    onNextClick = { viewModel.goToNextChapter() },
+                    onCatalogClick = { viewModel.toggleCatalog() },
+                    onSettingsClick = { viewModel.toggleSettings() },
+                    onBookDetailClick = {
+                        viewModel.hideAllDialogs()
+                        navController.navigate("book/${uiState.book?.id}")
+                    },
+                    onDismiss = { viewModel.hideAllDialogs() }
+                )
+            }
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color(readSettings.backgroundColor.toColorInt()))
+                .clickable { viewModel.toggleBottomControls() }
+        ) {
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else if (uiState.error != null) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "加载失败: ${uiState.error}",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                    Button(onClick = { /* TODO: 重试 */ }) {
+                        Text("重试")
+                    }
+                }
+            } else {
+                // 显示章节内容
+                ChapterContent(
+                    content = uiState.chapterContent,
+                    settings = readSettings,
+                    modifier = Modifier
+                        .fillMaxSize()
+                )
+            }
+        }
+    }
+
+    // 目录抽屉
+    if (uiState.showCatalog && uiState.book != null) {
+        CatalogDrawer(
+            bookName = uiState.book!!.name,
+            catalog = uiState.catalog,
+            currentChapterId = uiState.currentChapterId,
+            onChapterSelected = { chapterId -> viewModel.loadChapter(chapterId) },
+            onDismiss = { viewModel.toggleCatalog() }
+        )
+    }
+
+    // 阅读设置对话框
+    if (uiState.showSettings) {
+        ReadingSettingsDialog(
+            settings = readSettings,
+            onSettingsChange = { newSettings ->
+                viewModel.viewModelScope.launch {
+                    settingsRepository.updateSettings(newSettings)
+                }
+            },
+            onDismiss = { viewModel.toggleSettings() }
+        )
+    }
+}
+
+@Composable
+private fun ChapterContent(
+    content: List<String>,
+    settings: ReadSettings,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        content.forEach {
+            Text(
+                text = it,
+                fontSize = settings.fontSize.sp,
+                lineHeight = settings.lineHeight.sp,
+                letterSpacing = settings.letterSpacing.sp,
+                color = Color(settings.textColor.toColorInt()),
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+private fun getFontFamilyCss(fontFamily: String): String {
+    return when (fontFamily) {
+        "serif" -> "serif"
+        "sans-serif" -> "sans-serif"
+        "monospace" -> "monospace"
+        "kaiTi" -> "\"KaiTi\", \"楷体\", serif"
+        "fangSong" -> "\"FangSong\", \"仿宋\", serif"
+        "youYuan" -> "\"YouYuan\", \"幼圆\", sans-serif"
+        "liShu" -> "\"LiSu\", \"隶书\", serif"
+        else -> "sans-serif"
+    }
+}

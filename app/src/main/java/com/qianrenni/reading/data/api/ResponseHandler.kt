@@ -11,38 +11,49 @@ import io.ktor.http.contentType
 
 sealed class NetworkResult<out T> {
     data class Success<T>(val data: T) : NetworkResult<T>()
+    data class Empty(val code: Int = 204) : NetworkResult<Nothing>()
     data class Failure(
         val message: String,
         val code: Int? = null,
         val exception: Throwable? = null
     ) : NetworkResult<Nothing>()
 
-    val isSuccess: Boolean get() = this is Success
-    val isFailure: Boolean get() = this is Failure
-
-    // 便捷获取 data（失败时返回 null）
-    fun getOrNull(): T? = when (this) {
-        is Success -> data
-        is Failure -> null
-    }
-
     // 函数式风格处理
-    fun <R> fold(
-        onSuccess: (T) -> R,
-        onFailure: (String, Int?, Throwable?) -> R
-    ): R = when (this) {
-        is Success -> onSuccess(data)
-        is Failure -> onFailure(message, code, exception)
+    fun fold(
+        onSuccess: (T) -> Unit = {},
+        onFailure: (String, Int?, Throwable?) -> Unit = { _, _, _ -> },
+        onEmpty: () -> Unit = {}
+    ): NetworkResult<T> {
+        when (this) {
+            is Success -> onSuccess(data)
+            is Failure -> onFailure(message, code, exception)
+            is Empty -> onEmpty()
+        }
+        return this
     }
 
-    fun <R> onSuccess(block: (T) -> R): R? = when (this) {
-        is Success -> block(data)
-        is Failure -> null
+    fun onSuccess(block: (T) -> Unit): NetworkResult<T> {
+        when (this) {
+            is Success -> block(data)
+            else -> {}
+        }
+        return this
     }
 
-    fun <R> onFailure(block: (String, Int?, Throwable?) -> R): R? = when (this) {
-        is Success -> null
-        is Failure -> block(message, code, exception)
+    fun onFailure(block: (String, Int?, Throwable?) -> Unit): NetworkResult<T> {
+        when (this) {
+            is Failure -> block(message, code, exception)
+            else -> {}
+        }
+        return this
+    }
+
+    fun onEmpty(block: () -> Unit): NetworkResult<T> {
+        when (this) {
+            is Empty -> block()
+            else -> {}
+        }
+        return this
     }
 }
 
@@ -58,15 +69,23 @@ object ResponseHandler {
      * 处理HTTP响应，返回标准化的结果
      */
     suspend inline fun <reified T> handleResponse(response: HttpResponse): NetworkResult<T> {
+        val statusCode = response.status.value
         val contentType = response.contentType()
+
         Log.d(
             "handleResponse", """
             Content-Type: ${contentType.toString()}
             Url: ${response.request.url}
-            Status Code: ${response.status.value}
+            Status Code: $statusCode
             Body: ${response.bodyAsText()}
         """.trimIndent()
         )
+
+        // 特殊处理 204 No Content
+        if (statusCode == 204) {
+            return NetworkResult.Empty(statusCode)
+        }
+
         return if (contentType?.match(ContentType.Application.Json) == true) {
             try {
                 val apiResponse = response.body<ApiResponse<T>>()
@@ -90,11 +109,11 @@ object ResponseHandler {
                 )
             }
         } else {
-            val success = isHttpSuccess(response.status.value)
+            val success = isHttpSuccess(statusCode)
             if (success) {
-                NetworkResult.Failure("非JSON响应但状态成功", response.status.value)
+                NetworkResult.Failure("非JSON响应但状态成功", statusCode)
             } else {
-                NetworkResult.Failure("请求失败", response.status.value)
+                NetworkResult.Failure("请求失败", statusCode)
             }
         }
     }
