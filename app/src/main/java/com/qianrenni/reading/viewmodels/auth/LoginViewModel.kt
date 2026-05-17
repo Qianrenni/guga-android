@@ -7,6 +7,7 @@ import com.qianrenni.reading.data.api.AuthService
 import com.qianrenni.reading.data.api.action
 import com.qianrenni.reading.data.model.LoginRequest
 import com.qianrenni.reading.data.store.AuthStore
+import com.qianrenni.reading.util.SnackBarManager
 import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
@@ -44,7 +45,9 @@ class LoginViewModel : ViewModel() {
     fun login(onLoginSuccess: () -> Unit = {}, onLoginError: (String) -> Unit = {}) {
 
         if (username.value.isEmpty() || password.value.isEmpty() || captcha.value.isEmpty()) {
-            onLoginError("请填写所有字段")
+            viewModelScope.launch {
+                SnackBarManager.showMessage("请填写完整信息")
+            }
             return
         }
 
