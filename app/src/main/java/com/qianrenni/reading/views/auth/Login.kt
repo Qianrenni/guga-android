@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
@@ -98,7 +97,7 @@ fun LoginView(
                     placeholder = { Text("请输入验证码") },
                     singleLine = true,
                     // 让输入框占据剩余空间
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(2f),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done
@@ -112,9 +111,9 @@ fun LoginView(
                             .build(),
                     ),
                     contentDescription = "验证码",
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.FillWidth,
                     modifier = Modifier
-                        .height(80.dp)
+                        .weight(1f)
                         .clickable(onClick = {
                             viewModel.refreshCaptcha()
                         }),
