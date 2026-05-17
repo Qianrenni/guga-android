@@ -11,7 +11,7 @@ object ReadingProgressService {
 
     suspend fun updateReadingProgress(
         request: UpdateProgressRequest
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.patch("user_reading_progress/add") {
             setBody(request)
         }
@@ -19,7 +19,7 @@ object ReadingProgressService {
 
     suspend fun deleteReadingProgress(
         bookId: Int
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.delete("user_reading_progress/delete/$bookId")
     }
 }

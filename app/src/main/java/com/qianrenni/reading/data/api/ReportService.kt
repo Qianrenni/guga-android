@@ -6,7 +6,7 @@ import io.ktor.client.request.setBody
 object ReportService {
     suspend fun reportChapterRead(
         event: ReadEvent
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.post("statistic/book-chapter") {
             setBody(event)
         }

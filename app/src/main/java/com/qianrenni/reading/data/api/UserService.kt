@@ -8,7 +8,7 @@ import io.ktor.client.request.setBody
 object UserService {
     suspend fun updatePassword(
         request: UpdatePasswordRequest
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.patch("user/update-password") {
             setBody(request)
         }
@@ -16,7 +16,7 @@ object UserService {
 
     suspend fun sendForgotPasswordCode(
         userAccount: String
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.get("user/forgot-password") {
             parameter("user_account", userAccount)
         }
@@ -24,7 +24,7 @@ object UserService {
 
     suspend fun resetPassword(
         request: ForgotPasswordRequest
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.patch("user/forgot-password") {
             setBody(request)
         }

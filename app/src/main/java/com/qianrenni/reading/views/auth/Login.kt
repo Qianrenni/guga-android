@@ -29,7 +29,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -38,12 +37,8 @@ import com.qianrenni.reading.viewmodels.auth.LoginViewModel
 
 @Composable
 fun LoginView(
-    onLoginSuccess: () -> Unit = {},
-    onLoginError: (String) -> Unit = {},
-    onForgotPasswordClick: () -> Unit = {},
-    onRegisterClick: () -> Unit = {},
     navController: NavController,
-    viewModel: LoginViewModel = viewModel()
+    viewModel: LoginViewModel = LoginViewModel()
 ) {
     val username by viewModel.username
     val password by viewModel.password
@@ -133,17 +128,14 @@ fun LoginView(
                     )
                     Text("记住我")
                 }
-                TextButton(onClick = onForgotPasswordClick) {
+                TextButton(onClick = { }) {
                     Text(text = "忘记密码?")
                 }
             }
 
             Button(
                 onClick = {
-                    viewModel.login(
-                        onLoginSuccess = onLoginSuccess,
-                        onLoginError = onLoginError
-                    )
+                    viewModel.login()
                 },
                 enabled = !isLoading,
                 modifier = Modifier.width(180.dp)
@@ -155,7 +147,7 @@ fun LoginView(
                 }
             }
 
-            TextButton(onClick = onRegisterClick) {
+            TextButton(onClick = {}) {
                 Text(text = "没有账号? 立即注册")
             }
         }

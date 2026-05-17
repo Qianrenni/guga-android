@@ -4,7 +4,7 @@ import com.qianrenni.reading.data.model.EmailVerifyRequest
 import com.qianrenni.reading.data.model.LoginRequest
 import com.qianrenni.reading.data.model.LoginResponse
 import com.qianrenni.reading.data.model.RegisterRequest
-import com.qianrenni.reading.data.model.User
+import com.qianrenni.reading.data.model.UserResponse
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -37,14 +37,14 @@ object AuthService {
         return NetworkClient.post("token/refresh")
     }
 
-    suspend fun getCurrentUser(): NetworkResult<User> {
+    suspend fun getCurrentUser(): NetworkResult<UserResponse> {
         return NetworkClient.get("token/auth/me")
     }
 
     suspend fun register(
         request: RegisterRequest,
         captchaId: String
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.post("user/register") {
             header("X-Captcha-Id", captchaId)
             setBody(request)
@@ -53,7 +53,7 @@ object AuthService {
 
     suspend fun verifyEmail(
         request: EmailVerifyRequest
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.post("token/verify_email") {
             setBody(request)
         }

@@ -1,4 +1,4 @@
-package com.qianrenni.reading.data.repository
+package com.qianrenni.reading.data.store
 
 
 import android.content.Context

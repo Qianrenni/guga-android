@@ -11,7 +11,7 @@ object ShelfService {
 
     suspend fun addToShelf(
         request: AddShelfRequest
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.post("shelf/add") {
             setBody(request)
         }
@@ -19,7 +19,7 @@ object ShelfService {
 
     suspend fun removeFromShelf(
         bookId: Int
-    ): NetworkResult<Nothing> {
+    ): NetworkResult<Unit> {
         return NetworkClient.delete("shelf/delete/$bookId")
     }
 }

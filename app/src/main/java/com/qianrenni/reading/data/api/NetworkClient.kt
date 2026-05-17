@@ -3,11 +3,10 @@ package com.qianrenni.reading.data.api
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
@@ -19,6 +18,22 @@ import kotlinx.serialization.json.Json
 
 object NetworkClient {
     private const val BASE_URL = "http://49.235.107.221:8000/" // 请替换为实际的 API 基础 URL
+    private var token = ""
+        set(value) = run {
+            field = value
+        }
+
+    fun getToken() = token
+    private var tokenType = ""
+        set(value) = run {
+            field = value
+        }
+
+    fun getTokenType() = tokenType
+    fun setToken(token: String, tokenType: String) {
+        this.token = token
+        this.tokenType = tokenType
+    }
 
     val client: HttpClient by lazy {
         HttpClient(Android) {
@@ -28,10 +43,6 @@ object NetworkClient {
                     isLenient = true
                     encodeDefaults = true
                 })
-            }
-
-            install(Logging) {
-                level = LogLevel.BODY
             }
 
             engine {
@@ -46,53 +57,57 @@ object NetworkClient {
     /**
      * GET请求 - 模仿Web项目的get方法
      */
-    suspend fun <T> get(
+    suspend inline fun <reified T> get(
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.get(BASE_URL + urlString) {
+        val response: HttpResponse = client.get(getBaseUrl() + urlString) {
+            header("Authorization", "${getTokenType()} ${getToken()}")
             contentType(ContentType.Application.Json)
             block()
         }
-        return ResponseHandler.handleResponse(response)
+        return ResponseHandler.handleResponse<T>(response)
     }
 
     /**
      * POST请求 - 模仿Web项目的post方法
      */
-    suspend fun <T> post(
+    suspend inline fun <reified T> post(
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.post(BASE_URL + urlString) {
+        val response: HttpResponse = client.post(getBaseUrl() + urlString) {
+            header("Authorization", "${getTokenType()} ${getToken()}")
             contentType(ContentType.Application.Json)
             block()
         }
-        return ResponseHandler.handleResponse(response)
+        return ResponseHandler.handleResponse<T>(response)
     }
 
     /**
      * PUT请求 - 模仿Web项目的put方法
      */
-    suspend fun <T> put(
+    suspend inline fun <reified T> put(
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.put(BASE_URL + urlString) {
+        val response: HttpResponse = client.put(getBaseUrl() + urlString) {
+            header("Authorization", "${getTokenType()} ${getToken()}")
             contentType(ContentType.Application.Json)
             block()
         }
-        return ResponseHandler.handleResponse(response)
+        return ResponseHandler.handleResponse<T>(response)
     }
 
     /**
      * DELETE请求 - 模仿Web项目的del方法
      */
-    suspend fun <T> delete(
+    suspend inline fun <reified T> delete(
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.delete(BASE_URL + urlString) {
+        val response: HttpResponse = client.delete(getBaseUrl() + urlString) {
+            header("Authorization", "${getTokenType()} ${getToken()}")
             contentType(ContentType.Application.Json)
             block()
         }
@@ -102,11 +117,12 @@ object NetworkClient {
     /**
      * PATCH请求 - 模仿Web项目的patch方法
      */
-    suspend fun <T> patch(
+    suspend inline fun <reified T> patch(
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.patch(BASE_URL + urlString) {
+        val response: HttpResponse = client.patch(getBaseUrl() + urlString) {
+            header("Authorization", "${getTokenType()} ${getToken()}")
             contentType(ContentType.Application.Json)
             block()
         }
