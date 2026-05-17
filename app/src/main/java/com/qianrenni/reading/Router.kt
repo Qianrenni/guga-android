@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -19,7 +20,7 @@ import com.qianrenni.reading.views.HomeView
 import com.qianrenni.reading.views.auth.LoginView
 
 @Composable
-fun AppNavigation(authViewModel: AuthViewModel = AuthViewModel()) {
+fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
     val navController = rememberNavController()
     val excludeRoutes = listOf("login")
     val isLogin by authViewModel.isLogin.collectAsStateWithLifecycle()

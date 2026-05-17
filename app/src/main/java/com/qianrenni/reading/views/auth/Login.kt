@@ -20,6 +20,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,22 +30,25 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
+import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.LoginViewModel
 
 @Composable
 fun LoginView(
-    viewModel: LoginViewModel = LoginViewModel()
+    viewModel: LoginViewModel = viewModel()
 ) {
-    val username by viewModel.username
-    val password by viewModel.password
-    val captcha by viewModel.captcha
-    val rememberMe by viewModel.rememberMe
-    val isLoading by viewModel.isLoading
-    val captchaBytes by viewModel.captchaBytes
-
+    val loginState by viewModel.loginState.collectAsStateWithLifecycle()
+    val captchaBytes by viewModel.captchaBytes.collectAsStateWithLifecycle()
+    LaunchedEffect(loginState.error) {
+        loginState.error?.let { error ->
+            SnackBarManager.showMessage(error)
+        }
+    }
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -56,8 +60,8 @@ fun LoginView(
             Text("用户登录", style = MaterialTheme.typography.headlineMedium)
 
             OutlinedTextField(
-                value = username,
-                onValueChange = { viewModel.username.value = it },
+                value = loginState.username,
+                onValueChange = { viewModel.onUsernameChange(it) },
                 label = { Text("邮箱") },
                 placeholder = { Text("请输入用户邮箱") },
                 singleLine = true,
@@ -69,8 +73,8 @@ fun LoginView(
             )
 
             OutlinedTextField(
-                value = password,
-                onValueChange = { viewModel.password.value = it },
+                value = loginState.password,
+                onValueChange = { viewModel.onPasswordChange(it) },
                 label = { Text("密码") },
                 placeholder = { Text("请输入密码") },
                 singleLine = true,
@@ -88,13 +92,17 @@ fun LoginView(
                 horizontalArrangement = Arrangement.spacedBy(8.dp) // 输入框和图片之间的间距
             ) {
                 OutlinedTextField(
-                    value = captcha,
-                    onValueChange = { viewModel.captcha.value = it },
+                    value = loginState.captcha,
+                    onValueChange = { viewModel.onCaptchaChange(it) },
                     label = { Text("验证码") },
                     placeholder = { Text("请输入验证码") },
                     singleLine = true,
                     // 让输入框占据剩余空间
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    )
                 )
                 Image(
                     painter = rememberAsyncImagePainter(
@@ -108,7 +116,7 @@ fun LoginView(
                     modifier = Modifier
                         .height(80.dp)
                         .clickable(onClick = {
-                            viewModel.loadCaptcha()
+                            viewModel.refreshCaptcha()
                         }),
                 )
             }
@@ -121,8 +129,8 @@ fun LoginView(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(
-                        checked = rememberMe,
-                        onCheckedChange = { viewModel.rememberMe.value = it },
+                        checked = loginState.rememberMe,
+                        onCheckedChange = { viewModel.onRememberMeChange(it) },
                     )
                     Text("记住我")
                 }
@@ -135,10 +143,10 @@ fun LoginView(
                 onClick = {
                     viewModel.login()
                 },
-                enabled = !isLoading,
+                enabled = !loginState.isLoading,
                 modifier = Modifier.width(180.dp)
             ) {
-                if (isLoading) {
+                if (loginState.isLoading) {
                     CircularProgressIndicator()
                 } else {
                     Text("登录")
