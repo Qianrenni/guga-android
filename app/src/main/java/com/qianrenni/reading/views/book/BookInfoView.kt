@@ -245,7 +245,7 @@ private fun CatalogList(
             .fillMaxWidth()
             .height(300.dp)
     ) {
-        items(catalog) { item ->
+        items(catalog, key = { it.id }) { item ->
             Text(
                 text = item.title,
                 modifier = Modifier
