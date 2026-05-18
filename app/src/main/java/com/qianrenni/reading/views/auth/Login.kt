@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -34,8 +36,32 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
+import com.qianrenni.reading.R
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.LoginViewModel
+
+@Composable
+private fun CaptchaImage(
+    captchaBytes: ByteArray?,
+    onRefreshClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Image(
+        painter = rememberAsyncImagePainter(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(captchaBytes)
+                .size(Size.ORIGINAL)
+                .build(),
+            // 可选：添加占位/错误状态
+            placeholder = painterResource(R.drawable.skeleton),
+            error = painterResource(R.drawable.skeleton)
+        ),
+        contentDescription = "点击刷新验证码",
+        contentScale = ContentScale.FillBounds,
+        modifier = modifier
+            .clickable(onClick = onRefreshClick)
+    )
+}
 
 @Composable
 fun LoginView(
@@ -103,20 +129,12 @@ fun LoginView(
                         imeAction = ImeAction.Done
                     )
                 )
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(captchaBytes) // Coil 直接支持 ByteArray
-                            .size(Size.ORIGINAL)
-                            .build(),
-                    ),
-                    contentDescription = "验证码",
-                    contentScale = ContentScale.FillWidth,
+                CaptchaImage(
+                    captchaBytes = captchaBytes,
+                    onRefreshClick = { viewModel.refreshCaptcha() },
                     modifier = Modifier
-                        .weight(1f)
-                        .clickable(onClick = {
-                            viewModel.refreshCaptcha()
-                        }),
+                        .width(120.dp)
+                        .height(48.dp)
                 )
             }
 
