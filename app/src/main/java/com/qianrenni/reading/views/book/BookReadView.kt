@@ -184,7 +184,8 @@ private fun ChapterContent(
                     fontSize = settings.fontSize.sp,
                     lineHeight = settings.lineHeight.sp,
                     letterSpacing = settings.letterSpacing.sp,
-                    textIndent = TextIndent(firstLine = (settings.fontSize + settings.fontSize).sp)
+                    textIndent = TextIndent(firstLine = (settings.fontSize + settings.fontSize).sp),
+                    fontFamily = settings.fontFamily
                 )
             )
         }

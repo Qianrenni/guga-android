@@ -2,12 +2,14 @@ package com.qianrenni.reading.data.store
 
 
 import android.content.Context
+import androidx.compose.ui.text.font.FontFamily
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.qianrenni.reading.data.model.ReadFontFamily
 import com.qianrenni.reading.data.model.ReadSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -29,7 +31,8 @@ class SettingsRepository(private val context: Context) {
             fontSize = preferences[PreferencesKeys.FONT_SIZE] ?: 18f,
             lineHeight = preferences[PreferencesKeys.LINE_HEIGHT] ?: 40f,
             letterSpacing = preferences[PreferencesKeys.LETTER_SPACING] ?: 2f,
-            fontFamily = preferences[PreferencesKeys.FONT_FAMILY] ?: "default",
+            fontFamily = ReadFontFamily.entries.find { it.displayName == preferences[PreferencesKeys.FONT_FAMILY] }?.value
+                ?: FontFamily.Default,
             textColor = preferences[PreferencesKeys.TEXT_COLOR] ?: "#333333",
             backgroundColor = preferences[PreferencesKeys.BACKGROUND_COLOR] ?: "#ffffff"
         )
@@ -40,7 +43,8 @@ class SettingsRepository(private val context: Context) {
             preferences[PreferencesKeys.FONT_SIZE] = settings.fontSize
             preferences[PreferencesKeys.LINE_HEIGHT] = settings.lineHeight
             preferences[PreferencesKeys.LETTER_SPACING] = settings.letterSpacing
-            preferences[PreferencesKeys.FONT_FAMILY] = settings.fontFamily
+            preferences[PreferencesKeys.FONT_FAMILY] =
+                ReadFontFamily.entries.find { it.value == settings.fontFamily }?.displayName ?: ""
             preferences[PreferencesKeys.TEXT_COLOR] = settings.textColor
             preferences[PreferencesKeys.BACKGROUND_COLOR] = settings.backgroundColor
         }

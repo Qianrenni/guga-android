@@ -5,12 +5,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import com.qianrenni.reading.data.model.ReadFontFamily
 import com.qianrenni.reading.data.model.ReadSettings
 
 @Composable
@@ -71,6 +77,31 @@ fun ReadingSettings(
                 valueRange = 0.5f..4f
             )
 
+        }
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items(ReadFontFamily.entries) { fontFamily ->
+                Row(
+                    Modifier
+                        .selectable(
+                            selected = (fontFamily.value == settings.fontFamily),
+                            onClick = { onSettingsChange(settings.copy(fontFamily = fontFamily.value)) },
+                            role = Role.RadioButton
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = fontFamily.value == settings.fontFamily,
+                        onClick = null
+                    )
+                    Text(
+                        text = fontFamily.displayName,
+                    )
+                }
+            }
         }
     }
 }
