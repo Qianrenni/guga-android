@@ -56,7 +56,9 @@ fun BookInfoView(
 
     Surface(modifier = Modifier.fillMaxSize()) {
         if (uiState.isLoading) {
-            CircularProgressIndicator()
+            Box(modifier = Modifier.fillMaxSize()) {
+                CircularProgressIndicator()
+            }
         } else if (uiState.isError) {
             Text(
                 text = uiState.errorMessage,

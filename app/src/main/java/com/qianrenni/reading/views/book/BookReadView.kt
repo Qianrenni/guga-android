@@ -1,7 +1,6 @@
 package com.qianrenni.reading.views.book
 
 import android.content.Context
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -30,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
@@ -67,11 +68,6 @@ fun BookReadView(
             readSettings = settings
         }
     }
-    // 处理返回键
-    BackHandler(enabled = uiState.showCatalog || uiState.showSettings || uiState.showBottomControls) {
-        viewModel.hideAllDialogs()
-    }
-
     Surface() {
         Box(
             modifier = Modifier
@@ -174,15 +170,22 @@ private fun ChapterContent(
     settings: ReadSettings,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier) {
+    LazyColumn(
+        modifier = modifier
+    ) {
         items(content) {
             Text(
                 text = it,
-                fontSize = settings.fontSize.sp,
-                lineHeight = settings.lineHeight.sp,
-                letterSpacing = settings.letterSpacing.sp,
-                color = Color(settings.textColor.toColorInt()),
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(
+                    horizontal = 8.dp,
+                    vertical = (settings.fontSize / 2).dp
+                ),
+                style = TextStyle(
+                    fontSize = settings.fontSize.sp,
+                    lineHeight = settings.lineHeight.sp,
+                    letterSpacing = settings.letterSpacing.sp,
+                    textIndent = TextIndent(firstLine = (settings.fontSize + settings.fontSize).sp)
+                )
             )
         }
     }
