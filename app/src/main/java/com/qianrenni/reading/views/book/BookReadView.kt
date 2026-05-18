@@ -171,7 +171,9 @@ private fun ChapterContent(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier
+        modifier = modifier.background(
+            MaterialTheme.colorScheme.surface
+        )
     ) {
         items(content) {
             Text(
@@ -189,18 +191,5 @@ private fun ChapterContent(
                 )
             )
         }
-    }
-}
-
-private fun getFontFamilyCss(fontFamily: String): String {
-    return when (fontFamily) {
-        "serif" -> "serif"
-        "sans-serif" -> "sans-serif"
-        "monospace" -> "monospace"
-        "kaiTi" -> "\"KaiTi\", \"楷体\", serif"
-        "fangSong" -> "\"FangSong\", \"仿宋\", serif"
-        "youYuan" -> "\"YouYuan\", \"幼圆\", sans-serif"
-        "liShu" -> "\"LiSu\", \"隶书\", serif"
-        else -> "sans-serif"
     }
 }

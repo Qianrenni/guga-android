@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.data.api.AuthService
 import com.qianrenni.reading.data.model.LoginRequest
 import com.qianrenni.reading.data.store.AuthStore
-import com.qianrenni.reading.util.createWhiteImagePng
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,7 +23,7 @@ data class LoginState(
 class LoginViewModel : ViewModel() {
     private val _loginState = MutableStateFlow(LoginState())
     val loginState = _loginState.asStateFlow()
-    private val _captchaBytes = MutableStateFlow(createWhiteImagePng(120, 80))
+    private val _captchaBytes = MutableStateFlow(ByteArray(0))
     val captchaBytes = _captchaBytes.asStateFlow()
 
     init {
@@ -41,7 +40,7 @@ class LoginViewModel : ViewModel() {
             result.onSuccess { data ->
                 _captchaBytes.update { data }
             }
-            result.onFailure { msg, code, err ->
+            result.onFailure { msg, _, err ->
                 Log.d("LOGIN VIEW MODEL", "refreshCaptcha:$msg ")
                 Log.e("LOGIN VIEW MODEL", "refreshCaptcha: ", err)
                 _loginState.update { it.copy(error = msg) }
@@ -83,12 +82,12 @@ class LoginViewModel : ViewModel() {
                     captcha = captcha
                 )
             )
-            result.onSuccess {
-                AuthStore.setUser(it.user)
+            result.onSuccess { res ->
+                AuthStore.setUser(res.user)
                 AuthStore.setToken(
-                    it.access_token,
-                    it.refresh_token,
-                    it.token_type,
+                    res.access_token,
+                    res.refresh_token,
+                    res.token_type,
                     rememberMe
                 )
                 _loginState.update { it.copy(isLoading = false, error = null) }
