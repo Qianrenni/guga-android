@@ -2,9 +2,9 @@ package com.qianrenni.reading.data.model
 
 
 data class ReadSettings(
-    val fontSize: Int = 18,
-    val lineHeight: Int = 40,
-    val letterSpacing: Int = 2,
+    val fontSize: Float = 18f,
+    val lineHeight: Float = 30f,
+    val letterSpacing: Float = 2f,
     val fontFamily: String = "default",
     val textColor: String = "#333333",
     val backgroundColor: String = "#ffffff"

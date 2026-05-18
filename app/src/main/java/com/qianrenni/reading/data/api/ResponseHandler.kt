@@ -2,6 +2,7 @@ package com.qianrenni.reading.data.api
 
 import android.util.Log
 import com.qianrenni.reading.data.model.ApiResponse
+import com.qianrenni.reading.data.store.AuthStore
 import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -85,7 +86,10 @@ object ResponseHandler {
         if (statusCode == 204) {
             return NetworkResult.Empty(statusCode)
         }
-
+        if (statusCode == 401) {
+            AuthStore.setUser(null)
+            return NetworkResult.Failure("身份信息失效", statusCode)
+        }
         return if (contentType?.match(ContentType.Application.Json) == true) {
             try {
                 val apiResponse = response.body<ApiResponse<T>>()

@@ -142,7 +142,6 @@ class BookReadViewModel(
             it.copy(
                 showSettings = !it.showSettings,
                 showCatalog = false,
-                showBottomControls = false
             )
         }
     }

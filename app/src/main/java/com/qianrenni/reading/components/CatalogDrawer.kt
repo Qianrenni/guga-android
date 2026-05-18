@@ -9,11 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapVert
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,6 +30,7 @@ import com.qianrenni.reading.data.model.Catalog
 
 @Composable
 fun CatalogDrawer(
+    state: LazyListState,
     bookName: String,
     catalog: List<Catalog>,
     currentChapterId: Int,
@@ -38,7 +38,6 @@ fun CatalogDrawer(
     onDismiss: () -> Unit
 ) {
     var isAscending by remember { mutableStateOf(true) }
-
     val sortedCatalog = remember(catalog, isAscending) {
         if (isAscending) catalog else catalog.reversed()
     }
@@ -79,36 +78,28 @@ fun CatalogDrawer(
         // 章节列表
         LazyColumn(
             modifier = Modifier
-                .weight(1f)
+                .weight(1f),
+            state = state
+
         ) {
             items(sortedCatalog, key = { it.id }) { item ->
                 val isSelected = item.id == currentChapterId
-                Card(
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surface
+                        )
                         .fillMaxWidth()
                         .clickable {
                             onChapterSelected(item.id)
                             onDismiss()
                         },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surface
-                    )
-                ) {
-                    Text(
-                        text = item.title,
-                        style = if (isSelected)
-                            MaterialTheme.typography.bodyMedium.copy(
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        else
-                            MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                )
             }
         }
     }

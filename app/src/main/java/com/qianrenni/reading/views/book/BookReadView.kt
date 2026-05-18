@@ -1,7 +1,6 @@
 package com.qianrenni.reading.views.book
 
 import android.content.Context
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,7 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.qianrenni.reading.components.BottomControlBar
 import com.qianrenni.reading.components.CatalogDrawer
-import com.qianrenni.reading.components.ReadingSettingsDialog
+import com.qianrenni.reading.components.ReadingSettings
 import com.qianrenni.reading.data.model.ReadSettings
 import com.qianrenni.reading.data.store.SettingsRepository
 import com.qianrenni.reading.viewmodels.book.BookReadViewModel
@@ -56,6 +56,7 @@ fun BookReadView(
 ) {
     viewModel.loadBookAndCatalog(bookId, chapterId)
     val uiState by viewModel.uiState.collectAsState()
+    val lazyListState = rememberLazyListState()
     val settingsRepository =
         remember { SettingsRepository(context) }
     var readSettings by remember { mutableStateOf(ReadSettings()) }
@@ -112,25 +113,37 @@ fun BookReadView(
                             .align(Alignment.BottomCenter)  //  让这个 Box 在父 Box 中靠底部
                             .fillMaxWidth()
                     ) {
-                        BottomControlBar(
-                            canGoPrevious = currentIndex > 0,
-                            canGoNext = currentIndex < uiState.catalog.size - 1 && currentIndex >= 0,
-                            onPreviousClick = { viewModel.goToPreviousChapter() },
-                            onNextClick = { viewModel.goToNextChapter() },
-                            onCatalogClick = {
-                                viewModel.toggleCatalog()
-                            },
-                            onSettingsClick = { viewModel.toggleSettings() },
-                            onBookDetailClick = {
-                                viewModel.hideAllDialogs()
-                                navController.navigate("book/${uiState.book?.id}")
-                            },
-                            onDismiss = { viewModel.hideAllDialogs() }
-                        )
+                        // 阅读设置对话框
+                        Column() {
+                            if (uiState.showSettings) {
+                                ReadingSettings(
+                                    settings = readSettings,
+                                    onSettingsChange = { newSettings ->
+                                        viewModel.viewModelScope.launch {
+                                            settingsRepository.updateSettings(newSettings)
+                                        }
+                                    },
+                                )
+                            }
+                            BottomControlBar(
+                                canGoPrevious = currentIndex > 0,
+                                canGoNext = currentIndex < uiState.catalog.size - 1 && currentIndex >= 0,
+                                onPreviousClick = { viewModel.goToPreviousChapter() },
+                                onNextClick = { viewModel.goToNextChapter() },
+                                onCatalogClick = {
+                                    viewModel.toggleCatalog()
+                                },
+                                onSettingsClick = { viewModel.toggleSettings() },
+                                onBookDetailClick = {
+                                    viewModel.hideAllDialogs()
+                                    navController.navigate("book/${uiState.book?.id}")
+                                },
+                                onDismiss = { viewModel.hideAllDialogs() }
+                            )
+                        }
                     }
                 }
                 // 目录抽屉
-                Log.d("READ", "BookReadView:CATALOG ")
                 if (uiState.showCatalog) {
                     Box(
                         modifier = Modifier
@@ -141,6 +154,7 @@ fun BookReadView(
                             )
                     ) {
                         CatalogDrawer(
+                            state = lazyListState,
                             bookName = uiState.book?.name ?: "",
                             catalog = uiState.catalog,
                             currentChapterId = uiState.currentChapterId,
@@ -151,21 +165,6 @@ fun BookReadView(
                 }
             }
         }
-    }
-
-
-    // 阅读设置对话框
-    if (uiState.showSettings) {
-        Log.d("READ", "BookReadView:SETTINGS ")
-        ReadingSettingsDialog(
-            settings = readSettings,
-            onSettingsChange = { newSettings ->
-                viewModel.viewModelScope.launch {
-                    settingsRepository.updateSettings(newSettings)
-                }
-            },
-            onDismiss = { viewModel.toggleSettings() }
-        )
     }
 }
 
