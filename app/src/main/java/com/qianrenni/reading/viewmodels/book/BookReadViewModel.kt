@@ -131,7 +131,8 @@ class BookReadViewModel(
         _uiState.update {
             it.copy(
                 showCatalog = !it.showCatalog,
-                showSettings = false
+                showSettings = false,
+                showBottomControls = false
             )
         }
     }
@@ -140,7 +141,8 @@ class BookReadViewModel(
         _uiState.update {
             it.copy(
                 showSettings = !it.showSettings,
-                showCatalog = false
+                showCatalog = false,
+                showBottomControls = false
             )
         }
     }

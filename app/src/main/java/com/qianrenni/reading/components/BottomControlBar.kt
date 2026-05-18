@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -39,12 +38,10 @@ fun BottomControlBar(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        tonalElevation = 3.dp
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -76,7 +73,6 @@ fun BottomControlBar(
                 label = "目录",
                 onClick = {
                     onCatalogClick()
-                    onDismiss()
                 }
             )
 
@@ -86,7 +82,6 @@ fun BottomControlBar(
                 label = "设置",
                 onClick = {
                     onSettingsClick()
-                    onDismiss()
                 }
             )
 

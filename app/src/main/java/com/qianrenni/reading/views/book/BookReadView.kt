@@ -7,22 +7,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -74,58 +71,11 @@ fun BookReadView(
         viewModel.hideAllDialogs()
     }
 
-    Scaffold(
-        topBar = {
-            if (uiState.showBottomControls) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = uiState.book?.name ?: "阅读",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { /* TODO: 实现全屏 */ }) {
-                            Icon(
-                                imageVector = androidx.compose.material.icons.Icons.Default.Fullscreen,
-                                contentDescription = "全屏"
-                            )
-                        }
-                    }
-                )
-            }
-        },
-        bottomBar = {
-            if (uiState.showBottomControls) {
-                val currentIndex =
-                    uiState.catalog.indexOfFirst { it.id == uiState.currentChapterId }
-                BottomControlBar(
-                    canGoPrevious = currentIndex > 0,
-                    canGoNext = currentIndex < uiState.catalog.size - 1 && currentIndex >= 0,
-                    onPreviousClick = { viewModel.goToPreviousChapter() },
-                    onNextClick = { viewModel.goToNextChapter() },
-                    onCatalogClick = { viewModel.toggleCatalog() },
-                    onSettingsClick = { viewModel.toggleSettings() },
-                    onBookDetailClick = {
-                        viewModel.hideAllDialogs()
-                        navController.navigate("book/${uiState.book?.id}")
-                    },
-                    onDismiss = { viewModel.hideAllDialogs() }
-                )
-            }
-        }
-    ) { paddingValues ->
+    Surface() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .background(Color(readSettings.backgroundColor.toColorInt()))
-                .clickable { viewModel.toggleBottomControls() }
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(
@@ -152,22 +102,57 @@ fun BookReadView(
                     settings = readSettings,
                     modifier = Modifier
                         .fillMaxSize()
+                        .clickable { viewModel.toggleBottomControls() }
                 )
+                if (uiState.showBottomControls) {
+                    val currentIndex =
+                        uiState.catalog.indexOfFirst { it.id == uiState.currentChapterId }
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)  //  让这个 Box 在父 Box 中靠底部
+                            .fillMaxWidth()
+                    ) {
+                        BottomControlBar(
+                            canGoPrevious = currentIndex > 0,
+                            canGoNext = currentIndex < uiState.catalog.size - 1 && currentIndex >= 0,
+                            onPreviousClick = { viewModel.goToPreviousChapter() },
+                            onNextClick = { viewModel.goToNextChapter() },
+                            onCatalogClick = {
+                                viewModel.toggleCatalog()
+                            },
+                            onSettingsClick = { viewModel.toggleSettings() },
+                            onBookDetailClick = {
+                                viewModel.hideAllDialogs()
+                                navController.navigate("book/${uiState.book?.id}")
+                            },
+                            onDismiss = { viewModel.hideAllDialogs() }
+                        )
+                    }
+                }
+                // 目录抽屉
+                Log.d("READ", "BookReadView:CATALOG ")
+                if (uiState.showCatalog) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .fillMaxHeight()
+                            .widthIn(
+                                max = 200.dp
+                            )
+                    ) {
+                        CatalogDrawer(
+                            bookName = uiState.book?.name ?: "",
+                            catalog = uiState.catalog,
+                            currentChapterId = uiState.currentChapterId,
+                            onChapterSelected = { chapterId -> viewModel.loadChapter(chapterId) },
+                            onDismiss = { viewModel.toggleCatalog() }
+                        )
+                    }
+                }
             }
         }
     }
 
-    // 目录抽屉
-    if (uiState.showCatalog && uiState.book != null) {
-        Log.d("READ", "BookReadView:CATALOG ")
-        CatalogDrawer(
-            bookName = uiState.book?.name ?: "",
-            catalog = uiState.catalog,
-            currentChapterId = uiState.currentChapterId,
-            onChapterSelected = { chapterId -> viewModel.loadChapter(chapterId) },
-            onDismiss = { viewModel.toggleCatalog() }
-        )
-    }
 
     // 阅读设置对话框
     if (uiState.showSettings) {
