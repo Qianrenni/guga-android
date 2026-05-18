@@ -39,7 +39,8 @@ class BookReadViewModel(
     private var heartbeatJob: Job? = null
 
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
-        if (_uiState.value.isLoading || _uiState.value.book != null) {
+        val currentState = _uiState.value
+        if (currentState.isLoading || (currentState.book != null && currentState.book.id == bookId)) {
             return
         }
         _uiState.update { it.copy(isLoading = true) }
