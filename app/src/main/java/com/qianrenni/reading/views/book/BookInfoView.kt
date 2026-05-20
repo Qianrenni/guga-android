@@ -56,7 +56,7 @@ fun BookInfoView(
 
     Surface(modifier = Modifier.fillMaxSize()) {
         if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         } else if (uiState.isError) {
