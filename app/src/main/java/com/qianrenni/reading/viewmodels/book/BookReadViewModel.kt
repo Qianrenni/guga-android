@@ -97,7 +97,8 @@ class BookReadViewModel(
                 // 上报进入新章节
                 reportChapterRead(chapterId, "enter")
                 startHeartbeat(chapterId)
-            }.onFailure { _, _, _ ->
+            }
+            result.onFailure { _, _, _ ->
                 _uiState.update { it.copy(isLoading = false) }
             }
         }

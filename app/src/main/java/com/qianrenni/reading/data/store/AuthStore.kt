@@ -21,7 +21,7 @@ object AuthStore {
     }
 
     // Actions
-    suspend fun initial(): Boolean {
+    suspend fun initial() {
         val savedAccessToken = prefs.getString("access_token", null)
         val savedRefreshToken = prefs.getString("refresh_token", null)
         val savedTokenType = prefs.getString("token_type", null)
@@ -29,18 +29,20 @@ object AuthStore {
         if (savedAccessToken != null && savedRefreshToken != null && savedTokenType != null) {
             // 尝试 1：用旧 token 获取用户
             NetworkClient.setToken(savedAccessToken, savedTokenType)
-            AuthService.getCurrentUser().onSuccess { setUser(it.user) }
-            if (_user.value != null) {
-                return true
-            }
-            // 尝试 2：刷新 token
-            NetworkClient.setToken(savedRefreshToken, savedTokenType)
-            AuthService.refreshToken().onSuccess {
-                setUser(it.user)
-                saveToken(prefs, it.access_token, it.refresh_token, it.token_type)
+            run {
+                AuthService.getCurrentUser().onSuccess {
+                    setUser(it.user)
+                    true
+                }
+            } ?: run {
+                // 尝试 2：用旧 refresh token 获取用户
+                NetworkClient.setToken(savedRefreshToken, savedTokenType)
+                AuthService.refreshToken().onSuccess {
+                    setUser(it.user)
+                    saveToken(prefs, it.access_token, it.refresh_token, it.token_type)
+                }
             }
         }
-        return false
     }
 
     fun setToken(

@@ -5,7 +5,7 @@ import com.qianrenni.reading.data.model.ShelfItem
 import io.ktor.client.request.setBody
 
 object ShelfService {
-    suspend fun getShelf(): NetworkResult<ShelfItem> {
+    suspend fun getShelf(): NetworkResult<List<ShelfItem>> {
         return NetworkClient.get("shelf/get")
     }
 

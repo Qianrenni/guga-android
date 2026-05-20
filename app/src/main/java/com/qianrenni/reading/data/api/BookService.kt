@@ -61,7 +61,7 @@ object BookService {
     }
 
     suspend fun getBooksByIds(
-        bookIds: String
+        bookIds: List<Int>
     ): NetworkResult<Array<Book>> {
         return NetworkClient.get("book/list") {
             parameter("book_ids", bookIds)

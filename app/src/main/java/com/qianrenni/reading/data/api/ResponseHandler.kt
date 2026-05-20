@@ -33,28 +33,25 @@ sealed class NetworkResult<out T> {
         return this
     }
 
-    fun onSuccess(block: (T) -> Unit): NetworkResult<T> {
-        when (this) {
+    fun <R> onSuccess(block: (T) -> R): R? {
+        return when (this) {
             is Success -> block(data)
-            else -> {}
+            else -> null
         }
-        return this
     }
 
-    fun onFailure(block: (String, Int?, Throwable?) -> Unit): NetworkResult<T> {
-        when (this) {
+    fun <R> onFailure(block: (String, Int?, Throwable?) -> R): R? {
+        return when (this) {
             is Failure -> block(message, code, exception)
-            else -> {}
+            else -> null
         }
-        return this
     }
 
-    fun onEmpty(block: () -> Unit): NetworkResult<T> {
-        when (this) {
+    fun <R> onEmpty(block: () -> R): R? {
+        return when (this) {
             is Empty -> block()
-            else -> {}
+            else -> null
         }
-        return this
     }
 }
 

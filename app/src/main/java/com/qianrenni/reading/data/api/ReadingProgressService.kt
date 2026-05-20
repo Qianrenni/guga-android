@@ -5,7 +5,7 @@ import com.qianrenni.reading.data.model.UpdateProgressRequest
 import io.ktor.client.request.setBody
 
 object ReadingProgressService {
-    suspend fun getReadingProgress(): NetworkResult<BookReadingProgress> {
+    suspend fun getReadingProgress(): NetworkResult<List<BookReadingProgress>> {
         return NetworkClient.get("user_reading_progress/get")
     }
 
