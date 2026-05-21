@@ -76,3 +76,5 @@ logs/
 *.temp
 *.swp
 *.swo
+*.jks
+release/
