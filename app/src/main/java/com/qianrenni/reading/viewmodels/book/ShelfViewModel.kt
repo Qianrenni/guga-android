@@ -39,21 +39,13 @@ class ShelfViewModel : ViewModel() {
             val shelfItemsResult = shelfItemsJob.await()
             var shelfItems = emptyList<ShelfItem>()
             shelfItemsResult.onSuccess {
-                shelfItems = it.sortedBy { it.book_id }
-            }
-            shelfItems.map { it.book_id }.let { bookIds ->
-                if (bookIds.isNotEmpty()) {
-                    BookService.getBooksByIds(bookIds).onSuccess { books ->
-                        books.sortBy { it.id }
-                        _uiState.update { it.copy(books = books.toList()) }
-                    }
-                }
+                shelfItems = it
             }
             val historyItemsResult = historyItemJob.await()
             historyItemsResult.onSuccess { historyItems ->
                 val historyItemsMap = historyItems.associateBy { it.book_id }
                 shelfItems = shelfItems.map { shelfItem ->
-                    historyItemsMap.get(shelfItem.book_id)?.let {
+                    historyItemsMap[shelfItem.book_id]?.let {
                         return@map shelfItem.copy(
                             last_chapter_id = it.last_chapter_id,
                             last_position = it.last_position,
@@ -63,9 +55,19 @@ class ShelfViewModel : ViewModel() {
                     return@map shelfItem
                 }
             }
+            shelfItems.map { it.book_id }.let { bookIds ->
+                if (bookIds.isNotEmpty()) {
+                    BookService.getBooksByIds(bookIds).onSuccess { books ->
+                        books.sortBy { it.id }
+                        _uiState.update { it.copy(books = books.toList()) }
+                    }
+                }
+            }
+            val orders = shelfItems.indices.sortedByDescending { shelfItems[it].last_read_at }
             _uiState.update {
                 it.copy(
-                    shelfItems = shelfItems,
+                    shelfItems = orders.map { index -> shelfItems[index] },
+                    books = orders.map { index -> it.books[index] },
                     pageStatus = it.pageStatus.down()
                 )
             }

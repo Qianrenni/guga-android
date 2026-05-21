@@ -23,7 +23,7 @@ class HistoryViewModel : ViewModel() {
     data class UiState(
         val historyItems: List<BookReadingProgress> = emptyList(),
         val shelfIds: Set<Int> = emptySet(),
-        val books: List<Book> = emptyList<Book>(),
+        val books: List<Book> = emptyList(),
         override val pageStatus: CommonPageStatus = CommonPageStatus(),
     ) : CommonUiState
 
@@ -36,14 +36,21 @@ class HistoryViewModel : ViewModel() {
             _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
             val historyItemsJob = async { ReadingProgressService.getReadingProgress() }
             val shelfItemsJob = async { ShelfService.getShelf() }
-            historyItemsJob.await().onSuccess { historyItems ->
-                _uiState.update { it.copy(historyItems = historyItems.sortedBy { it.book_id }) }
-                val bookIds = historyItems.map { it.book_id }
+            var historyItems: List<BookReadingProgress> = emptyList()
+            historyItemsJob.await().onSuccess {
+                historyItems = it
+                val bookIds = historyItems.map { item -> item.book_id }
                 bookIds
             }?.let { bookIds ->
                 if (bookIds.isNotEmpty()) {
+                    val orders =
+                        historyItems.indices.sortedByDescending { historyItems[it].last_read_at }
                     BookService.getBooksByIds(bookIds).onSuccess { books ->
-                        _uiState.update { it.copy(books = books.toList().sortedBy { it.id }) }
+                        _uiState.update {
+                            it.copy(
+                                books = orders.map { index -> books[index] },
+                                historyItems = orders.map { index -> historyItems[index] })
+                        }
                     }
                 }
             }
