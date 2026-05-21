@@ -80,7 +80,7 @@ object ResponseHandler {
         )
 
         // 特殊处理 204 No Content
-        if (statusCode == 204) {
+        if (listOf(204, 201).contains(statusCode)) {
             return NetworkResult.Empty(statusCode)
         }
         if (statusCode == 401) {
