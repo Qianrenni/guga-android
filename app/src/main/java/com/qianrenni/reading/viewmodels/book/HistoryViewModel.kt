@@ -30,10 +30,6 @@ class HistoryViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    init {
-        loadHistory()
-    }
-
     fun loadHistory() {
         if (_uiState.value.pageStatus.isLoading) return
         viewModelScope.launch {
@@ -41,13 +37,13 @@ class HistoryViewModel : ViewModel() {
             val historyItemsJob = async { ReadingProgressService.getReadingProgress() }
             val shelfItemsJob = async { ShelfService.getShelf() }
             historyItemsJob.await().onSuccess { historyItems ->
-                _uiState.update { it.copy(historyItems = historyItems) }
+                _uiState.update { it.copy(historyItems = historyItems.sortedBy { it.book_id }) }
                 val bookIds = historyItems.map { it.book_id }
                 bookIds
             }?.let { bookIds ->
                 if (bookIds.isNotEmpty()) {
                     BookService.getBooksByIds(bookIds).onSuccess { books ->
-                        _uiState.update { it.copy(books = books.toList()) }
+                        _uiState.update { it.copy(books = books.toList().sortedBy { it.id }) }
                     }
                 }
             }
@@ -83,7 +79,7 @@ class HistoryViewModel : ViewModel() {
         viewModelScope.launch {
             val result =
                 ShelfService.addToShelf(AddShelfRequest(book_id = bookId))
-            result.onSuccess {
+            result.onEmpty {
                 this.launch {
                     SnackBarManager.showMessage("添加成功")
                 }

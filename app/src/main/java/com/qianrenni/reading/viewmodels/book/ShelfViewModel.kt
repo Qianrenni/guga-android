@@ -7,7 +7,6 @@ import com.qianrenni.reading.common.CommonUiState
 import com.qianrenni.reading.data.api.BookService
 import com.qianrenni.reading.data.api.ReadingProgressService
 import com.qianrenni.reading.data.api.ShelfService
-import com.qianrenni.reading.data.model.AddShelfRequest
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.ShelfItem
 import com.qianrenni.reading.util.SnackBarManager
@@ -30,10 +29,6 @@ class ShelfViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    init {
-        loadShelf()
-    }
-
     fun loadShelf() {
         if (uiState.value.pageStatus.isLoading) return
         viewModelScope.launch {
@@ -44,11 +39,12 @@ class ShelfViewModel : ViewModel() {
             val shelfItemsResult = shelfItemsJob.await()
             var shelfItems = emptyList<ShelfItem>()
             shelfItemsResult.onSuccess {
-                shelfItems = it
+                shelfItems = it.sortedBy { it.book_id }
             }
             shelfItems.map { it.book_id }.let { bookIds ->
                 if (bookIds.isNotEmpty()) {
                     BookService.getBooksByIds(bookIds).onSuccess { books ->
+                        books.sortBy { it.id }
                         _uiState.update { it.copy(books = books.toList()) }
                     }
                 }
@@ -77,27 +73,11 @@ class ShelfViewModel : ViewModel() {
         }
     }
 
-    fun addToShelf(bookId: Int) {
-        viewModelScope.launch {
-            val result = ShelfService.addToShelf(AddShelfRequest(bookId))
-            result.onSuccess {
-                this.launch {
-                    SnackBarManager.showMessage("添加成功")
-                }
-                loadShelf()
-            }
-            result.onFailure { msg, _, _ ->
-                this.launch {
-                    SnackBarManager.showMessage(msg)
-                }
-            }
-        }
-    }
 
     fun removeFromShelf(bookId: Int) {
         viewModelScope.launch {
             val result = ShelfService.removeFromShelf(bookId)
-            result.onSuccess {
+            result.onEmpty {
                 this.launch {
                     SnackBarManager.showMessage("删除成功")
                 }

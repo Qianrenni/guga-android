@@ -95,7 +95,7 @@ object ResponseHandler {
                     // 成功保证 data 非空（如果后端可能返回 null，需额外校验）
                     apiResponse.data?.let {
                         NetworkResult.Success(it)
-                    } ?: NetworkResult.Failure("数据为空", 0)
+                    } ?: NetworkResult.Empty(code = statusCode)
                 } else {
                     NetworkResult.Failure(
                         message = apiResponse.message ?: "操作失败",
