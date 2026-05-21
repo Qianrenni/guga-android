@@ -4,10 +4,12 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.data.api.BookService
+import com.qianrenni.reading.data.api.ReadingProgressService
 import com.qianrenni.reading.data.api.ReportService
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.Catalog
 import com.qianrenni.reading.data.model.ReadEvent
+import com.qianrenni.reading.data.model.UpdateProgressRequest
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -95,6 +97,14 @@ class BookReadViewModel(
                     )
                 }
                 // 上报进入新章节
+                this.launch {
+                    ReadingProgressService.updateReadingProgress(
+                        UpdateProgressRequest(
+                            bookId,
+                            chapterId
+                        )
+                    )
+                }
                 reportChapterRead(chapterId, "enter")
                 startHeartbeat(chapterId)
             }
