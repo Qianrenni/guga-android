@@ -74,7 +74,7 @@ class ForgetPasswordViewModel : ViewModel() {
             val result = UserService.sendForgotPasswordCode(email)
             _forgetPasswordState.update { it.copy(isSendingCode = false) }
 
-            result.onSuccess {
+            result.onEmpty {
                 onSuccess()
             }
             result.onFailure { message, _, _ ->
@@ -118,7 +118,7 @@ class ForgetPasswordViewModel : ViewModel() {
 
             _forgetPasswordState.update { it.copy(pageStatus = it.pageStatus.down()) }
 
-            result.onSuccess {
+            result.onEmpty {
                 onSuccess()
             }
             result.onFailure { message, _, _ ->

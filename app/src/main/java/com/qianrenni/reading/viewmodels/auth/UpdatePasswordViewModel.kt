@@ -89,7 +89,7 @@ class UpdatePasswordViewModel : ViewModel() {
 
             _updatePasswordState.update { it.copy(pageStatus = it.pageStatus.down()) }
 
-            result.onSuccess {
+            result.onEmpty {
                 // 清除用户状态
                 AuthStore.clear()
                 onSuccess()

@@ -68,7 +68,7 @@ class RegisterViewModel : ViewModel() {
             val result = AuthService.verifyEmail(EmailVerifyRequest(email = email))
             _registerState.update { it.copy(isVerifyingEmail = false) }
 
-            result.onSuccess {
+            result.onEmpty {
                 onSuccess()
             }
         }
@@ -112,7 +112,7 @@ class RegisterViewModel : ViewModel() {
 
             _registerState.update { it.copy(pageStatus = it.pageStatus.down()) }
 
-            result.onSuccess {
+            result.onEmpty {
                 onSuccess()
             }
             result.onFailure { message, _, _ ->

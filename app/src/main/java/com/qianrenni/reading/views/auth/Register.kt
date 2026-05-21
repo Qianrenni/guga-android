@@ -126,10 +126,9 @@ fun RegisterView(
                         )
                     },
                     enabled = !registerState.isVerifyingEmail,
-                    modifier = Modifier.width(100.dp)
                 ) {
                     if (registerState.isVerifyingEmail) {
-                        CircularProgressIndicator(modifier = Modifier.width(20.dp))
+                        CircularProgressIndicator()
                     } else {
                         Text("验证邮箱")
                     }

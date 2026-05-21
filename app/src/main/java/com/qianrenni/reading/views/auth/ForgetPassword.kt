@@ -81,7 +81,6 @@ fun ForgetPasswordView(
                         )
                     },
                     enabled = !forgetPasswordState.isSendingCode,
-                    modifier = Modifier.width(100.dp)
                 ) {
                     if (forgetPasswordState.isSendingCode) {
                         CircularProgressIndicator(modifier = Modifier.width(20.dp))
@@ -144,9 +143,8 @@ fun ForgetPasswordView(
                     )
                 },
                 enabled = !forgetPasswordState.pageStatus.isLoading,
-                modifier = Modifier.width(180.dp)
             ) {
-                if (!forgetPasswordState.pageStatus.isLoading) {
+                if (forgetPasswordState.pageStatus.isLoading) {
                     CircularProgressIndicator()
                 } else {
                     Text("重置密码")
