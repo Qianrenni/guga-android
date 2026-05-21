@@ -22,7 +22,10 @@ fun CommonPage(
     refresh: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
-    Surface(modifier = modifier.fillMaxSize()) {
+    Surface(
+        modifier = modifier
+            .fillMaxSize()
+    ) {
         if (uiState.pageStatus.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()

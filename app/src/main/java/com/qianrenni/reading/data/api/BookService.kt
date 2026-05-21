@@ -64,7 +64,7 @@ object BookService {
         bookIds: List<Int>
     ): NetworkResult<Array<Book>> {
         return NetworkClient.get("book/list") {
-            parameter("book_ids", bookIds)
+            bookIds.forEach { parameter("book_ids", it) }
         }
     }
 }

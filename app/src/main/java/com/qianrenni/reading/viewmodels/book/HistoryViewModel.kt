@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.common.CommonPageStatus
 import com.qianrenni.reading.common.CommonUiState
+import com.qianrenni.reading.data.api.BookService
 import com.qianrenni.reading.data.api.ReadingProgressService
 import com.qianrenni.reading.data.api.ShelfService
 import com.qianrenni.reading.data.model.AddShelfRequest
@@ -41,6 +42,14 @@ class HistoryViewModel : ViewModel() {
             val shelfItemsJob = async { ShelfService.getShelf() }
             historyItemsJob.await().onSuccess { historyItems ->
                 _uiState.update { it.copy(historyItems = historyItems) }
+                val bookIds = historyItems.map { it.book_id }
+                bookIds
+            }?.let { bookIds ->
+                if (bookIds.isNotEmpty()) {
+                    BookService.getBooksByIds(bookIds).onSuccess { books ->
+                        _uiState.update { it.copy(books = books.toList()) }
+                    }
+                }
             }
             shelfItemsJob.await().onSuccess { shelfItems ->
                 _uiState.update { state ->

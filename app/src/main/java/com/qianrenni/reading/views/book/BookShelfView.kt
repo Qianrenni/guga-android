@@ -47,12 +47,12 @@ fun BookShelfView(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(
-                count = uiState.shelfItems.size,
-                key = { uiState.shelfItems.get(it).book_id }
+                count = uiState.books.size,
+                key = { uiState.books[it].id }
             ) { index ->
                 ShelfItemCard(
-                    shelfItem = uiState.shelfItems.get(index),
-                    book = uiState.books.get(index),
+                    shelfItem = uiState.shelfItems[index],
+                    book = uiState.books[index],
                     onClick = { bookId, chapterId ->
                         navController.navigate("read/$bookId/$chapterId")
                     },
