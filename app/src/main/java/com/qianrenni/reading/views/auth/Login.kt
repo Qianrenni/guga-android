@@ -1,7 +1,5 @@
 package com.qianrenni.reading.views.auth
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,51 +22,23 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
-import coil.size.Size
-import com.qianrenni.reading.R
+import androidx.navigation.NavController
+import com.qianrenni.reading.components.CaptchaImage
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.LoginViewModel
 
 @Composable
-private fun CaptchaImage(
-    captchaBytes: ByteArray?,
-    onRefreshClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Image(
-        painter = rememberAsyncImagePainter(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(captchaBytes)
-                .size(Size.ORIGINAL)
-                .build(),
-            // 可选：添加占位/错误状态
-            placeholder = painterResource(R.drawable.skeleton),
-            error = painterResource(R.drawable.skeleton)
-        ),
-        contentDescription = "点击刷新验证码",
-        contentScale = ContentScale.FillBounds,
-        modifier = modifier
-            .clickable(onClick = onRefreshClick)
-    )
-}
-
-@Composable
 fun LoginView(
+    navController: NavController,
     viewModel: LoginViewModel = viewModel()
 ) {
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
-    val captchaBytes by viewModel.captchaBytes.collectAsStateWithLifecycle()
     LaunchedEffect(loginState.error) {
         loginState.error?.let { error ->
             SnackBarManager.showMessage(error)
@@ -130,8 +100,6 @@ fun LoginView(
                     )
                 )
                 CaptchaImage(
-                    captchaBytes = captchaBytes,
-                    onRefreshClick = { viewModel.refreshCaptcha() },
                     modifier = Modifier
                         .width(120.dp)
                         .height(48.dp)
@@ -151,7 +119,9 @@ fun LoginView(
                     )
                     Text("记住我")
                 }
-                TextButton(onClick = { }) {
+                TextButton(onClick = {
+                    navController.navigate("forget-password")
+                }) {
                     Text(text = "忘记密码?")
                 }
             }
@@ -170,7 +140,9 @@ fun LoginView(
                 }
             }
 
-            TextButton(onClick = {}) {
+            TextButton(onClick = {
+                navController.navigate("register")
+            }) {
                 Text(text = "没有账号? 立即注册")
             }
         }

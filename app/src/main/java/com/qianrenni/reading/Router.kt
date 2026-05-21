@@ -20,7 +20,10 @@ import com.qianrenni.reading.components.BottomNavigationBar
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.AuthViewModel
 import com.qianrenni.reading.views.HomeView
+import com.qianrenni.reading.views.auth.ForgetPasswordView
 import com.qianrenni.reading.views.auth.LoginView
+import com.qianrenni.reading.views.auth.RegisterView
+import com.qianrenni.reading.views.auth.UpdatePasswordView
 import com.qianrenni.reading.views.book.BookInfoView
 import com.qianrenni.reading.views.book.BookReadView
 import com.qianrenni.reading.views.book.BookShelfView
@@ -30,7 +33,7 @@ import com.qianrenni.reading.views.user.ProfileView
 @Composable
 fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) {
     val navController = rememberNavController()
-    val excludeRoutes = listOf("login")
+    val excludeRoutes = listOf("login", "register", "forget-password")
     val isLogin by authViewModel.isLogin.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
 
@@ -90,7 +93,28 @@ fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) 
             composable(
                 route = "login",
             ) {
-                LoginView()
+                LoginView(navController = navController)
+            }
+
+            // 注册页
+            composable(
+                route = "register",
+            ) {
+                RegisterView(navController = navController)
+            }
+
+            // 忘记密码页
+            composable(
+                route = "forget-password",
+            ) {
+                ForgetPasswordView(navController = navController)
+            }
+
+            // 修改密码页
+            composable(
+                route = "update-password",
+            ) {
+                UpdatePasswordView(navController = navController)
             }
 
             // 首页 - 书城

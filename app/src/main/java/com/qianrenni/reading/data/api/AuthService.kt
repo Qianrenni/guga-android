@@ -51,10 +51,9 @@ object AuthService {
 
     suspend fun register(
         request: RegisterRequest,
-        captchaId: String
     ): NetworkResult<Unit> {
         return NetworkClient.post("user/register") {
-            header("X-Captcha-Id", captchaId)
+            header("X-Captcha-Id", this@AuthService.lastXCaptchaId)
             setBody(request)
         }
     }

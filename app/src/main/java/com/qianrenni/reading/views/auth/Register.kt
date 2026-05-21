@@ -42,7 +42,7 @@ fun RegisterView(
     val registerState by viewModel.registerState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     LaunchedEffect(registerState.pageStatus.isError) {
-        registerState.pageStatus.errorMessage.let { error ->
+        registerState.pageStatus.errorMessage?.let { error ->
             SnackBarManager.showMessage(error)
         }
     }

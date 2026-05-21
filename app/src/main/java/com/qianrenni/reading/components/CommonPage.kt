@@ -37,7 +37,7 @@ fun CommonPage(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = uiState.pageStatus.errorMessage,
+                    text = uiState.pageStatus.errorMessage ?: "未知错误",
                     color = MaterialTheme.colorScheme.error
                 )
                 Button(onClick = refresh) {

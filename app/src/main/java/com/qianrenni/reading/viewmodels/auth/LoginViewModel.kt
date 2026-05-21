@@ -1,6 +1,5 @@
 package com.qianrenni.reading.viewmodels.auth
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.data.api.AuthService
@@ -23,28 +22,10 @@ data class LoginState(
 class LoginViewModel : ViewModel() {
     private val _loginState = MutableStateFlow(LoginState())
     val loginState = _loginState.asStateFlow()
-    private val _captchaBytes = MutableStateFlow(ByteArray(0))
-    val captchaBytes = _captchaBytes.asStateFlow()
 
     init {
         viewModelScope.launch {
             AuthStore.initial()
-        }
-        refreshCaptcha()
-
-    }
-
-    fun refreshCaptcha() {
-        viewModelScope.launch {
-            val result = AuthService.getCaptcha()
-            result.onSuccess { data ->
-                _captchaBytes.update { data }
-            }
-            result.onFailure { msg, _, err ->
-                Log.d("LOGIN VIEW MODEL", "refreshCaptcha:$msg ")
-                Log.e("LOGIN VIEW MODEL", "refreshCaptcha: ", err)
-                _loginState.update { it.copy(error = msg) }
-            }
         }
     }
 
