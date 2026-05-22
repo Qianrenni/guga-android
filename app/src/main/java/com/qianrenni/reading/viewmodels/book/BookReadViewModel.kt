@@ -56,6 +56,7 @@ class BookReadViewModel(
             }
             catalogResult.onSuccess { data ->
                 val catalogList = data.toList()
+                    .mapIndexed { index, it -> it.copy(title = "第${index + 1}章 ${it.title}") }
                 _uiState.update { it.copy(catalog = catalogList) }
                 val chapterIdToLoad = if (initialChapterId > 0) {
                     initialChapterId

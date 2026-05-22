@@ -53,7 +53,7 @@ class BookInfoViewModel : ViewModel() {
                 // Catalog 返回的是数组
                 _uiState.update { state ->
                     state.copy(
-                        catalog = catalogList.toList(),
+                        catalog = catalogList.mapIndexed { index, it -> it.copy(title = "第${index + 1}章 ${it.title}") },
                         isLoading = false
                     )
                 }

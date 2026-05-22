@@ -71,7 +71,9 @@ class HistoryViewModel : ViewModel() {
                     SnackBarManager.showMessage("删除成功")
                 }
                 _uiState.update { state ->
-                    state.copy(historyItems = state.historyItems.filter { it.book_id != bookId })
+                    state.copy(
+                        historyItems = state.historyItems.filter { it.book_id != bookId },
+                        books = state.books.filter { it.id != bookId })
                 }
             }
             result.onFailure { msg, _, _ ->
