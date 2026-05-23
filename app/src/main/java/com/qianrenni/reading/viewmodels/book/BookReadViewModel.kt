@@ -25,11 +25,13 @@ data class BookReadUiState(
     val book: Book? = null,
     val catalog: List<Catalog> = emptyList(),
     val currentChapterId: Int = -1,
-    val chapterContent: List<String> = emptyList(),
+    val chapterContent: String = "",
+    val pages: List<List<String>> = emptyList(),
     val showCatalog: Boolean = false,
     val showSettings: Boolean = false,
     val showBottomControls: Boolean = false,
     val currentIndex: Int = -1,
+    val currentPageIndex: Int = 0,
     val isSystemBarsHidden: Boolean = true,
     override val pageStatus: CommonPageStatus = CommonPageStatus()
 ) : CommonUiState
@@ -42,6 +44,10 @@ class BookReadViewModel(
     val uiState: StateFlow<BookReadUiState> = _uiState.asStateFlow()
 
     private var heartbeatJob: Job? = null
+
+    fun updatePages(pages: List<List<String>>) {
+        _uiState.update { it.copy(pages = pages) }
+    }
 
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
         val currentState = _uiState.value
@@ -82,7 +88,13 @@ class BookReadViewModel(
         if (_uiState.value.currentChapterId == chapterId) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
+            _uiState.update {
+                it.copy(
+                    pageStatus = it.pageStatus.loading(),
+                    pages = emptyList(),
+                    currentPageIndex = 0
+                )
+            }
             // 上报离开当前章节
             if (_uiState.value.currentChapterId > 0) {
                 reportChapterRead(_uiState.value.currentChapterId, "exit")
@@ -92,16 +104,16 @@ class BookReadViewModel(
             // 获取章节内容
             val result = BookService.getChapter(chapterId, bookId)
             result.onSuccess { data ->
-                val processedContent = processContent(data)
                 _uiState.update {
                     it.copy(
-                        chapterContent = processedContent,
+                        chapterContent = data,
                         currentChapterId = chapterId,
                         pageStatus = it.pageStatus.down(),
-                        currentIndex = it.catalog.indexOfFirst { item -> item.id == chapterId }
+                        currentIndex = it.catalog.indexOfFirst { item -> item.id == chapterId },
                     )
                 }
-                // 上报进入新章节
+                // 触发分页计算 (在 ViewModel 中通过 StateFlow 驱动 UI 重新计算，或者在 UI 层计算)
+                // 为了性能，我们通常在 UI 层根据测量结果分页，但这里我们先更新原始内容
                 this.launch {
                     ReadingProgressService.updateReadingProgress(
                         UpdateProgressRequest(
@@ -117,11 +129,6 @@ class BookReadViewModel(
                 _uiState.update { it.copy(pageStatus = it.pageStatus.down()) }
             }
         }
-    }
-
-    private fun processContent(rawContent: String): List<String> {
-        // 简单处理：如果是纯文本，转换为段落格式
-        return rawContent.split("\n").filter { it.isNotBlank() }
     }
 
     fun goToPreviousChapter() {
@@ -183,6 +190,10 @@ class BookReadViewModel(
                 showSettings = false
             )
         }
+    }
+
+    fun setCurrentPage(index: Int) {
+        _uiState.update { it.copy(currentPageIndex = index) }
     }
 
     private fun reportChapterRead(chapterId: Int, eventType: String) {

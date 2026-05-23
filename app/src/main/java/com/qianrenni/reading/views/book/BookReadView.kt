@@ -10,7 +10,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -18,9 +20,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
@@ -40,9 +42,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
@@ -58,8 +63,10 @@ import com.qianrenni.reading.data.model.ReadSettings
 import com.qianrenni.reading.data.store.SettingsRepository
 import com.qianrenni.reading.util.SystemBarUtils
 import com.qianrenni.reading.viewmodels.book.BookReadViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun BookReadView(
@@ -74,6 +81,7 @@ fun BookReadView(
     viewModel.loadBookAndCatalog(bookId, chapterId)
     val uiState by viewModel.uiState.collectAsState()
     var isAscending by remember { mutableStateOf(true) }
+    var pageTextIndent by remember { mutableStateOf(BooleanArray(0)) }
     val lazyListState = rememberLazyListState()
     val settingsRepository =
         remember { SettingsRepository(context) }
@@ -101,6 +109,10 @@ fun BookReadView(
             SystemBarUtils.showSystemBars(activity)
         }
     }
+
+    // 分页逻辑
+    val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
     CommonPage(
         uiState = uiState
     ) {
@@ -114,7 +126,6 @@ fun BookReadView(
                     .fillMaxSize()
                     .background(color = MaterialTheme.colorScheme.background)
             ) {
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -122,17 +133,120 @@ fun BookReadView(
                     Icon(
                         Icons.Default.ChevronLeft,
                         "back step",
-                        modifier = Modifier.clickable(onClick = { navController.popBackStack() })
+                        modifier = Modifier
+                            .clickable(onClick = { navController.popBackStack() })
+                            .background(color = MaterialTheme.colorScheme.background)
                     )
                     Text(uiState.catalog[uiState.currentIndex].title)
                 }
-                ChapterContent(
-                    content = uiState.chapterContent,
-                    settings = readSettings,
+                BoxWithConstraints(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .clickable { viewModel.toggleSystemBars() }
-                )
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    LaunchedEffect(uiState.chapterContent, readSettings) {
+
+                        val availableHeight = maxHeight
+                        val availableWidth = maxWidth
+                        if (uiState.chapterContent.isNotEmpty()) {
+                            withContext(Dispatchers.Default) {
+                                val newPages = mutableListOf<List<String>>()
+                                var startIndex = 0
+                                val totalLength = uiState.chapterContent.length
+                                val heightPx = with(density) { availableHeight.toPx() }
+                                val widthPx = with(density) { availableWidth.toPx() }
+                                val paddingPx = with(density) { readSettings.fontSize.dp.toPx() }
+                                val tempIsIndent = MutableList(1) { true }
+                                while (startIndex < totalLength) {
+                                    // 初始猜测：从当前索引开始，向后移动约一页的字符数
+                                    var low = startIndex
+                                    var high = totalLength
+                                    var bestFitIndex = low
+                                    var textToMeasure: List<String>? = null
+                                    var best: List<String> = emptyList()
+                                    // 二分查找当前页能容纳的最大字符索引
+                                    while (low <= high) {
+                                        val mid = (low + high) / 2
+                                        textToMeasure =
+                                            uiState.chapterContent.substring(startIndex, mid)
+                                                .split("\n")
+                                                .filter { it.isNotEmpty() }
+                                        val sumHeight = textToMeasure.mapIndexed { index, it ->
+                                            textMeasurer.measure(
+                                                text = it,
+                                                style = TextStyle(
+                                                    fontSize = readSettings.fontSize.sp,
+                                                    lineHeight = readSettings.lineHeight.sp,
+                                                    letterSpacing = readSettings.letterSpacing.sp,
+                                                    fontFamily = readSettings.fontFamily,
+                                                    textIndent = if (index == 0) {
+                                                        if (tempIsIndent.last()) {
+                                                            TextIndent(firstLine = (readSettings.fontSize * 2).sp)
+                                                        } else {
+                                                            null
+                                                        }
+                                                    } else {
+                                                        TextIndent(firstLine = (readSettings.fontSize * 2).sp)
+                                                    },
+                                                ),
+                                                constraints = Constraints(
+                                                    maxWidth = widthPx.toInt(),
+                                                    maxHeight = Int.MAX_VALUE
+                                                )
+                                            )
+                                        }.sumOf { it.size.height }
+                                        // 使用 TextMeasurer 进行精确测量
+                                        if ((sumHeight + (textToMeasure.size - 2) * paddingPx) <= heightPx) {
+                                            bestFitIndex = mid
+                                            low = mid + 1
+                                            best = textToMeasure
+                                        } else {
+                                            high = mid - 1
+                                        }
+                                    }
+                                    best.let {
+                                        if (it.isNotEmpty()) {
+                                            newPages.add(best)
+                                            tempIsIndent.add(it.last().last() == '\n')
+                                        }  // 避免添加空页
+                                    }
+                                    startIndex = bestFitIndex
+                                }
+                                pageTextIndent = tempIsIndent.toBooleanArray()
+                                viewModel.updatePages(newPages)
+
+                            }
+                        }
+                    }
+                }
+                if (uiState.pages.isNotEmpty()) {
+                    val pagerState = rememberPagerState(
+                        pageCount = { uiState.pages.size },
+                        initialPage = uiState.currentPageIndex.coerceIn(
+                            0,
+                            maxOf(0, uiState.pages.size - 1)
+                        )
+                    )
+                    // 同步页码到 ViewModel
+                    LaunchedEffect(pagerState.currentPage) {
+                        if (pagerState.currentPage != uiState.currentPageIndex) {
+                            viewModel.setCurrentPage(pagerState.currentPage)
+                        }
+                    }
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable { viewModel.toggleSystemBars() }
+                    ) { page ->
+                        ChapterPage(
+                            content = uiState.pages[page],
+                            settings = readSettings,
+                            firstIndent = pageTextIndent[page],
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
             }
 
             AnimatedVisibility(
@@ -241,26 +355,31 @@ fun BookReadView(
 }
 
 @Composable
-private fun ChapterContent(
+private fun ChapterPage(
+    modifier: Modifier = Modifier,
     content: List<String>,
     settings: ReadSettings,
-    modifier: Modifier = Modifier
+    firstIndent: Boolean = false,
 ) {
-    LazyColumn(
-        modifier = modifier
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(settings.fontSize.dp)
     ) {
-        items(content) {
+        content.forEachIndexed { index, paragraph ->
             Text(
-                text = it,
-                modifier = Modifier.padding(
-                    horizontal = 8.dp,
-                    vertical = (settings.fontSize / 2).dp
-                ),
+                text = paragraph,
                 style = TextStyle(
                     fontSize = settings.fontSize.sp,
                     lineHeight = settings.lineHeight.sp,
                     letterSpacing = settings.letterSpacing.sp,
-                    textIndent = TextIndent(firstLine = (settings.fontSize + settings.fontSize).sp),
+                    textIndent = if (index == 0) {
+                        if (firstIndent) {
+                            TextIndent(firstLine = (settings.fontSize * 2).sp)
+                        } else {
+                            null
+                        }
+
+                    } else TextIndent(firstLine = (settings.fontSize * 2).sp),
                     fontFamily = settings.fontFamily
                 )
             )
