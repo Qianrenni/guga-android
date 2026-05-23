@@ -23,10 +23,11 @@ import com.qianrenni.reading.data.model.Book
 @Composable
 fun BookItem(
     book: Book,
-    onClick: (Book) -> Unit = {}
+    modifier: Modifier = Modifier,
+    onClick: (Book) -> Unit = {},
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .wrapContentHeight()
             .fillMaxWidth()
             .clickable(

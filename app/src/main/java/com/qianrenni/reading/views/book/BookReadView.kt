@@ -109,11 +109,14 @@ fun BookReadView(
                 .fillMaxSize()
         ) {
             // 显示章节内容
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background)
+            ) {
 
                 Row(
                     modifier = Modifier
-                        .background(color = MaterialTheme.colorScheme.background)
                         .fillMaxWidth()
                 ) {
                     Icon(
@@ -138,7 +141,7 @@ fun BookReadView(
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .background(color = MaterialTheme.colorScheme.background)
+                    .background(color = MaterialTheme.colorScheme.surface)
                     .then(
                         if (uiState.showCatalog) {
                             Modifier.fillMaxHeight(0.8f)
@@ -244,9 +247,7 @@ private fun ChapterContent(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier.background(
-            MaterialTheme.colorScheme.surface
-        )
+        modifier = modifier
     ) {
         items(content) {
             Text(
