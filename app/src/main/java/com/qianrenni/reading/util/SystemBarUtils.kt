@@ -1,7 +1,6 @@
 package com.qianrenni.reading.util
 
 import android.app.Activity
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
@@ -16,10 +15,8 @@ object SystemBarUtils {
      */
     fun hideSystemBars(activity: Activity) {
         val window = activity.window
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
         val controller = WindowInsetsControllerCompat(window, window.decorView)
-        controller.hide(WindowInsetsCompat.Type.systemBars())
+        controller.hide(WindowInsetsCompat.Type.navigationBars())
         controller.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     }
@@ -29,9 +26,8 @@ object SystemBarUtils {
      */
     fun showSystemBars(activity: Activity) {
         val window = activity.window
-        WindowCompat.setDecorFitsSystemWindows(window, true)
-
         val controller = WindowInsetsControllerCompat(window, window.decorView)
-        controller.show(WindowInsetsCompat.Type.systemBars())
+        controller.show(WindowInsetsCompat.Type.navigationBars())
+
     }
 }

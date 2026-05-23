@@ -101,7 +101,9 @@ fun BookReadView(
             SystemBarUtils.showSystemBars(activity)
         }
     }
-    CommonPage(uiState = uiState) {
+    CommonPage(
+        uiState = uiState
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -109,7 +111,11 @@ fun BookReadView(
             // 显示章节内容
             Column(modifier = Modifier.fillMaxSize()) {
 
-                Row {
+                Row(
+                    modifier = Modifier
+                        .background(color = MaterialTheme.colorScheme.background)
+                        .fillMaxWidth()
+                ) {
                     Icon(
                         Icons.Default.ChevronLeft,
                         "back step",
