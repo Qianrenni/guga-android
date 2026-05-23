@@ -30,6 +30,7 @@ data class BookReadUiState(
     val showSettings: Boolean = false,
     val showBottomControls: Boolean = false,
     val currentIndex: Int = -1,
+    val isSystemBarsHidden: Boolean = true,
     override val pageStatus: CommonPageStatus = CommonPageStatus()
 ) : CommonUiState
 
@@ -146,9 +147,8 @@ class BookReadViewModel(
     fun toggleCatalog() {
         _uiState.update {
             it.copy(
-                showCatalog = !it.showCatalog,
                 showSettings = false,
-                showBottomControls = false
+                showCatalog = !it.showCatalog,
             )
         }
     }
@@ -162,22 +162,25 @@ class BookReadViewModel(
         }
     }
 
-    fun toggleBottomControls() {
-        _uiState.update {
-            it.copy(
-                showBottomControls = !it.showBottomControls,
-                showCatalog = false,
-                showSettings = false
-            )
-        }
-    }
 
     fun hideAllDialogs() {
         _uiState.update {
             it.copy(
                 showCatalog = false,
                 showSettings = false,
-                showBottomControls = false
+                showBottomControls = false,
+                isSystemBarsHidden = true,
+            )
+        }
+    }
+
+    fun toggleSystemBars() {
+        _uiState.update {
+            it.copy(
+                isSystemBarsHidden = !it.isSystemBarsHidden,
+                showBottomControls = !it.showBottomControls,
+                showCatalog = false,
+                showSettings = false
             )
         }
     }

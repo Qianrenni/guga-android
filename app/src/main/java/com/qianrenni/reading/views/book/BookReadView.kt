@@ -1,5 +1,6 @@
 package com.qianrenni.reading.views.book
 
+import android.app.Activity
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -20,16 +21,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextIndent
@@ -55,11 +56,11 @@ import com.qianrenni.reading.components.CommonPage
 import com.qianrenni.reading.components.ReadingSettings
 import com.qianrenni.reading.data.model.ReadSettings
 import com.qianrenni.reading.data.store.SettingsRepository
+import com.qianrenni.reading.util.SystemBarUtils
 import com.qianrenni.reading.viewmodels.book.BookReadViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookReadView(
     context: Context,
@@ -68,6 +69,8 @@ fun BookReadView(
     chapterId: Int = -1,
     viewModel: BookReadViewModel = viewModel()
 ) {
+    val activity = LocalContext.current as Activity
+
     viewModel.loadBookAndCatalog(bookId, chapterId)
     val uiState by viewModel.uiState.collectAsState()
     var isAscending by remember { mutableStateOf(true) }
@@ -75,16 +78,27 @@ fun BookReadView(
     val settingsRepository =
         remember { SettingsRepository(context) }
     var readSettings by remember { mutableStateOf(ReadSettings()) }
-    val shape = RoundedCornerShape(
-        topStart = 16.dp,
-        topEnd = 16.dp,
-        bottomEnd = 0.dp,
-        bottomStart = 0.dp
-    )
+
     // 收集阅读设置
     LaunchedEffect(Unit) {
         settingsRepository.readSettings.collectLatest { settings ->
             readSettings = settings
+        }
+    }
+
+    // 控制系统栏显示/隐藏
+    LaunchedEffect(uiState.isSystemBarsHidden) {
+        if (uiState.isSystemBarsHidden) {
+            SystemBarUtils.hideSystemBars(activity)
+        } else {
+            SystemBarUtils.showSystemBars(activity)
+        }
+    }
+
+    // 当界面销毁时恢复系统栏显示
+    DisposableEffect(Unit) {
+        onDispose {
+            SystemBarUtils.showSystemBars(activity)
         }
     }
     CommonPage(uiState = uiState) {
@@ -108,7 +122,7 @@ fun BookReadView(
                     settings = readSettings,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable { viewModel.toggleBottomControls() }
+                        .clickable { viewModel.toggleSystemBars() }
                 )
             }
 
@@ -119,8 +133,75 @@ fun BookReadView(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .background(color = MaterialTheme.colorScheme.background)
+                    .then(
+                        if (uiState.showCatalog) {
+                            Modifier.fillMaxHeight(0.8f)
+                        } else {
+                            Modifier
+                        }
+                    )
             ) {
                 Column {
+                    // 目录抽屉
+                    AnimatedVisibility(
+                        uiState.showCatalog,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(
+                                        model = uiState.book?.cover,
+                                        // 可选：添加占位/错误状态
+                                        placeholder = painterResource(R.drawable.skeleton),
+                                        error = painterResource(R.drawable.skeleton)
+                                    ),
+                                    contentDescription = uiState.book?.name,
+                                    modifier = Modifier
+                                        .height(60.dp),
+                                    contentScale = ContentScale.FillHeight
+                                )
+                                Column(modifier = Modifier.padding(start = 8.dp)) {
+                                    Text(
+                                        uiState.book?.name ?: "",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        maxLines = 1
+                                    )
+                                    Text(
+                                        uiState.book?.author ?: "",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        maxLines = 1
+                                    )
+                                }
+                                IconButton(onClick = { navController.navigate("book/${uiState.book?.id}") }) {
+                                    Icon(Icons.Default.ChevronRight, "goToDetail")
+                                }
+
+                            }
+                            CatalogDrawer(
+                                modifier = Modifier
+                                    .weight(1f),
+                                isAscending = isAscending,
+                                state = lazyListState,
+                                catalog = uiState.catalog,
+                                currentChapterId = uiState.currentChapterId,
+                                onChapterSelected = { chapterId ->
+                                    viewModel.loadChapter(
+                                        chapterId
+                                    )
+                                },
+                                onDismiss = { viewModel.toggleCatalog() },
+                                onReverseCatalog = { isAscending = !isAscending }
+                            )
+                        }
+
+                    }
                     AnimatedVisibility(uiState.showSettings) {
                         ReadingSettings(
                             settings = readSettings,
@@ -145,76 +226,7 @@ fun BookReadView(
                 }
             }
 
-            // 目录抽屉
-            AnimatedVisibility(
-                uiState.showCatalog,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.75f)
-                    .align(Alignment.BottomCenter)
-                    .background(
-                        color = MaterialTheme.colorScheme.background,
-                        shape = shape,
-                    )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
 
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Image(
-                            painter = rememberAsyncImagePainter(
-                                model = uiState.book?.cover,
-                                // 可选：添加占位/错误状态
-                                placeholder = painterResource(R.drawable.skeleton),
-                                error = painterResource(R.drawable.skeleton)
-                            ),
-                            contentDescription = uiState.book?.name,
-                            modifier = Modifier
-                                .height(60.dp),
-                            contentScale = ContentScale.FillHeight
-                        )
-                        Column(modifier = Modifier.padding(start = 8.dp)) {
-                            Text(
-                                uiState.book?.name ?: "",
-                                style = MaterialTheme.typography.titleLarge,
-                                maxLines = 1
-                            )
-                            Text(
-                                uiState.book?.author ?: "",
-                                style = MaterialTheme.typography.titleSmall,
-                                maxLines = 1
-                            )
-                        }
-                        IconButton(onClick = { navController.navigate("book/${uiState.book?.id}") }) {
-                            Icon(Icons.Default.ChevronRight, "goToDetail")
-                        }
-
-                    }
-                    CatalogDrawer(
-                        modifier = Modifier
-                            .weight(1f),
-                        isAscending = isAscending,
-                        state = lazyListState,
-                        catalog = uiState.catalog,
-                        currentChapterId = uiState.currentChapterId,
-                        onChapterSelected = { chapterId ->
-                            viewModel.loadChapter(
-                                chapterId
-                            )
-                        },
-                        onDismiss = { viewModel.toggleCatalog() },
-                        onReverseCatalog = { isAscending = !isAscending }
-                    )
-                }
-
-            }
         }
     }
 }
