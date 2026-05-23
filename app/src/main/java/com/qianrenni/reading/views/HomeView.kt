@@ -1,5 +1,6 @@
 package com.qianrenni.reading.views
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -100,7 +102,8 @@ private fun CategorySelector(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(scrollState),
+            .horizontalScroll(scrollState)
+            .background(color = MaterialTheme.colorScheme.surface),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
 

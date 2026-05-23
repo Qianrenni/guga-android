@@ -81,8 +81,7 @@ fun CatalogDrawer(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .background(
-                            if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                            else MaterialTheme.colorScheme.surface
+                            if (isSelected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background
                         )
                         .fillMaxWidth()
                         .clickable {

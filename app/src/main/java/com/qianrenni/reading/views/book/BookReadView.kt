@@ -118,6 +118,12 @@ fun BookReadView(
                         .fillMaxSize()
                         .clickable { viewModel.toggleBottomControls() }
                 )
+                val shape = RoundedCornerShape(
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
+                    bottomEnd = 0.dp,
+                    bottomStart = 0.dp
+                )
                 if (uiState.showBottomControls) {
                     val currentIndex =
                         uiState.catalog.indexOfFirst { it.id == uiState.currentChapterId }
@@ -125,9 +131,10 @@ fun BookReadView(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)  //  让这个 Box 在父 Box 中靠底部
                             .fillMaxWidth()
+                            .background(color = MaterialTheme.colorScheme.background)
                     ) {
                         // 阅读设置对话框
-                        Column() {
+                        Column {
                             AnimatedVisibility(uiState.showSettings) {
                                 ReadingSettings(
                                     settings = readSettings,
@@ -147,21 +154,12 @@ fun BookReadView(
                                     viewModel.toggleCatalog()
                                 },
                                 onSettingsClick = { viewModel.toggleSettings() },
-                                onBookDetailClick = {
-                                    viewModel.hideAllDialogs()
-                                    navController.navigate("book/${uiState.book?.id}")
-                                },
                                 onDismiss = { viewModel.hideAllDialogs() }
                             )
                         }
                     }
                 }
-                val shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomEnd = 0.dp,
-                    bottomStart = 0.dp
-                )
+
                 // 目录抽屉
                 AnimatedVisibility(
                     uiState.showCatalog,

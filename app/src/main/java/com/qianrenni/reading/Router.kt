@@ -1,7 +1,9 @@
 package com.qianrenni.reading
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -77,6 +79,7 @@ fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) 
     val showBottomBar = currentRoute in routesWithBottomBar
 
     Scaffold(
+        modifier = Modifier.background(color = MaterialTheme.colorScheme.background),
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         bottomBar = {
             if (showBottomBar) {

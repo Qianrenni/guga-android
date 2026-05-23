@@ -9,14 +9,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowLeft
+import androidx.compose.material.icons.automirrored.filled.ArrowRight
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,58 +30,53 @@ fun BottomControlBar(
     onNextClick: () -> Unit,
     onCatalogClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onBookDetailClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 上一章
-            ControlButton(
-                icon = Icons.Default.ArrowUpward,
-                label = "上一章",
-                enabled = canGoPrevious,
-                onClick = {
-                    onPreviousClick()
-                    onDismiss()
-                }
-            )
+        // 上一章
+        ControlButton(
+            icon = Icons.AutoMirrored.Filled.ArrowLeft,
+            label = "上一章",
+            enabled = canGoPrevious,
+            onClick = {
+                onPreviousClick()
+                onDismiss()
+            }
+        )
 
-            // 下一章
-            ControlButton(
-                icon = Icons.Default.ArrowDownward,
-                label = "下一章",
-                enabled = canGoNext,
-                onClick = {
-                    onNextClick()
-                    onDismiss()
-                }
-            )
+        // 下一章
+        ControlButton(
+            icon = Icons.AutoMirrored.Filled.ArrowRight,
+            label = "下一章",
+            enabled = canGoNext,
+            onClick = {
+                onNextClick()
+                onDismiss()
+            }
+        )
 
-            // 目录
-            ControlButton(
-                icon = Icons.AutoMirrored.Filled.List,
-                label = "目录",
-                onClick = {
-                    onCatalogClick()
-                }
-            )
+        // 目录
+        ControlButton(
+            icon = Icons.AutoMirrored.Filled.List,
+            label = "目录",
+            onClick = {
+                onCatalogClick()
+            }
+        )
 
-            // 阅读设置
-            ControlButton(
-                icon = Icons.Default.Settings,
-                label = "设置",
-                onClick = {
-                    onSettingsClick()
-                }
-            )
-        }
+        // 阅读设置
+        ControlButton(
+            icon = Icons.Default.Settings,
+            label = "设置",
+            onClick = {
+                onSettingsClick()
+            }
+        )
     }
 }
 
@@ -102,19 +95,11 @@ private fun ControlButton(
             imageVector = icon,
             contentDescription = label,
             modifier = Modifier.size(24.dp),
-            tint = if (enabled)
-                LocalContentColor.current
-            else
-                LocalContentColor.current.copy(alpha = 0.38f)
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = if (enabled)
-                LocalContentColor.current
-            else
-                LocalContentColor.current.copy(alpha = 0.38f)
         )
     }
 }
