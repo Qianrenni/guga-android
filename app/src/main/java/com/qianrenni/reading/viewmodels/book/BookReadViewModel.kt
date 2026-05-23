@@ -3,6 +3,8 @@ package com.qianrenni.reading.viewmodels.book
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.qianrenni.reading.common.CommonPageStatus
+import com.qianrenni.reading.common.CommonUiState
 import com.qianrenni.reading.data.api.BookService
 import com.qianrenni.reading.data.api.ReadingProgressService
 import com.qianrenni.reading.data.api.ReportService
@@ -24,12 +26,12 @@ data class BookReadUiState(
     val catalog: List<Catalog> = emptyList(),
     val currentChapterId: Int = -1,
     val chapterContent: List<String> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
     val showCatalog: Boolean = false,
     val showSettings: Boolean = false,
-    val showBottomControls: Boolean = false
-)
+    val showBottomControls: Boolean = false,
+    val currentIndex: Int = -1,
+    override val pageStatus: CommonPageStatus = CommonPageStatus()
+) : CommonUiState
 
 class BookReadViewModel(
     application: Application,
@@ -42,10 +44,10 @@ class BookReadViewModel(
 
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
         val currentState = _uiState.value
-        if (currentState.isLoading || (currentState.book != null && currentState.book.id == bookId)) {
+        if (currentState.pageStatus.isLoading || (currentState.book != null && currentState.book.id == bookId)) {
             return
         }
-        _uiState.update { it.copy(isLoading = true) }
+        _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
         viewModelScope.launch {
             val bookJob = async { BookService.getBookById(bookId) }
             val catalogJob = async { BookService.getCatalog(bookId) }
@@ -70,7 +72,7 @@ class BookReadViewModel(
                     loadChapter(chapterIdToLoad)
                 }
             }
-            _uiState.update { it.copy(isLoading = false) }
+            _uiState.update { it.copy(pageStatus = it.pageStatus.down()) }
         }
     }
 
@@ -79,7 +81,7 @@ class BookReadViewModel(
         if (_uiState.value.currentChapterId == chapterId) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
             // 上报离开当前章节
             if (_uiState.value.currentChapterId > 0) {
                 reportChapterRead(_uiState.value.currentChapterId, "exit")
@@ -94,7 +96,8 @@ class BookReadViewModel(
                     it.copy(
                         chapterContent = processedContent,
                         currentChapterId = chapterId,
-                        isLoading = false
+                        pageStatus = it.pageStatus.down(),
+                        currentIndex = it.catalog.indexOfFirst { item -> item.id == chapterId }
                     )
                 }
                 // 上报进入新章节
@@ -110,7 +113,7 @@ class BookReadViewModel(
                 startHeartbeat(chapterId)
             }
             result.onFailure { _, _, _ ->
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(pageStatus = it.pageStatus.down()) }
             }
         }
     }

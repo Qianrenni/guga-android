@@ -22,14 +22,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,14 +38,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.toColorInt
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -55,6 +51,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.qianrenni.reading.R
 import com.qianrenni.reading.components.BottomControlBar
 import com.qianrenni.reading.components.CatalogDrawer
+import com.qianrenni.reading.components.CommonPage
 import com.qianrenni.reading.components.ReadingSettings
 import com.qianrenni.reading.data.model.ReadSettings
 import com.qianrenni.reading.data.store.SettingsRepository
@@ -78,39 +75,34 @@ fun BookReadView(
     val settingsRepository =
         remember { SettingsRepository(context) }
     var readSettings by remember { mutableStateOf(ReadSettings()) }
-
+    val shape = RoundedCornerShape(
+        topStart = 16.dp,
+        topEnd = 16.dp,
+        bottomEnd = 0.dp,
+        bottomStart = 0.dp
+    )
     // 收集阅读设置
     LaunchedEffect(Unit) {
         settingsRepository.readSettings.collectLatest { settings ->
             readSettings = settings
         }
     }
-    Surface() {
+    CommonPage(uiState = uiState) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(readSettings.backgroundColor.toColorInt()))
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else if (uiState.error != null) {
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "加载失败: ${uiState.error}",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(16.dp)
+            // 显示章节内容
+            Column(modifier = Modifier.fillMaxSize()) {
+
+                Row {
+                    Icon(
+                        Icons.Default.ChevronLeft,
+                        "back step",
+                        modifier = Modifier.clickable(onClick = { navController.popBackStack() })
                     )
-                    Button(onClick = { /* TODO: 重试 */ }) {
-                        Text("重试")
-                    }
+                    Text(uiState.catalog[uiState.currentIndex].title)
                 }
-            } else {
-                // 显示章节内容
                 ChapterContent(
                     content = uiState.chapterContent,
                     settings = readSettings,
@@ -118,117 +110,108 @@ fun BookReadView(
                         .fillMaxSize()
                         .clickable { viewModel.toggleBottomControls() }
                 )
-                val shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomEnd = 0.dp,
-                    bottomStart = 0.dp
-                )
-                if (uiState.showBottomControls) {
-                    val currentIndex =
-                        uiState.catalog.indexOfFirst { it.id == uiState.currentChapterId }
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)  //  让这个 Box 在父 Box 中靠底部
-                            .fillMaxWidth()
-                            .background(color = MaterialTheme.colorScheme.background)
-                    ) {
-                        // 阅读设置对话框
-                        Column {
-                            AnimatedVisibility(uiState.showSettings) {
-                                ReadingSettings(
-                                    settings = readSettings,
-                                    onSettingsChange = { newSettings ->
-                                        viewModel.viewModelScope.launch {
-                                            settingsRepository.updateSettings(newSettings)
-                                        }
-                                    },
-                                )
-                            }
-                            BottomControlBar(
-                                canGoPrevious = currentIndex > 0,
-                                canGoNext = currentIndex < uiState.catalog.size - 1 && currentIndex >= 0,
-                                onPreviousClick = { viewModel.goToPreviousChapter() },
-                                onNextClick = { viewModel.goToNextChapter() },
-                                onCatalogClick = {
-                                    viewModel.toggleCatalog()
-                                },
-                                onSettingsClick = { viewModel.toggleSettings() },
-                                onDismiss = { viewModel.hideAllDialogs() }
-                            )
-                        }
-                    }
-                }
+            }
 
-                // 目录抽屉
-                AnimatedVisibility(
-                    uiState.showCatalog,
-                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.75f)
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            color = MaterialTheme.colorScheme.background,
-                            shape = shape,
-                        )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp)
-
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Image(
-                                painter = rememberAsyncImagePainter(
-                                    model = uiState.book?.cover,
-                                    // 可选：添加占位/错误状态
-                                    placeholder = painterResource(R.drawable.skeleton),
-                                    error = painterResource(R.drawable.skeleton)
-                                ),
-                                contentDescription = uiState.book?.name,
-                                modifier = Modifier
-                                    .height(60.dp),
-                                contentScale = ContentScale.FillHeight
-                            )
-                            Column(modifier = Modifier.padding(start = 8.dp)) {
-                                Text(
-                                    uiState.book?.name ?: "",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    maxLines = 1
-                                )
-                                Text(
-                                    uiState.book?.author ?: "",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    maxLines = 1
-                                )
-                            }
-                            IconButton(onClick = { navController.navigate("book/${uiState.book?.id}") }) {
-                                Icon(Icons.Default.ChevronRight, "goToDetail")
-                            }
-
-                        }
-                        CatalogDrawer(
-                            modifier = Modifier
-                                .weight(1f),
-                            isAscending = isAscending,
-                            state = lazyListState,
-                            catalog = uiState.catalog,
-                            currentChapterId = uiState.currentChapterId,
-                            onChapterSelected = { chapterId ->
-                                viewModel.loadChapter(
-                                    chapterId
-                                )
+            AnimatedVisibility(
+                uiState.showBottomControls,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .background(color = MaterialTheme.colorScheme.background)
+            ) {
+                Column {
+                    AnimatedVisibility(uiState.showSettings) {
+                        ReadingSettings(
+                            settings = readSettings,
+                            onSettingsChange = { newSettings ->
+                                viewModel.viewModelScope.launch {
+                                    settingsRepository.updateSettings(newSettings)
+                                }
                             },
-                            onDismiss = { viewModel.toggleCatalog() },
-                            onReverseCatalog = { isAscending = !isAscending }
                         )
                     }
+                    BottomControlBar(
+                        canGoPrevious = uiState.currentIndex > 0,
+                        canGoNext = uiState.currentIndex < uiState.catalog.size - 1 && uiState.currentIndex >= 0,
+                        onPreviousClick = { viewModel.goToPreviousChapter() },
+                        onNextClick = { viewModel.goToNextChapter() },
+                        onCatalogClick = {
+                            viewModel.toggleCatalog()
+                        },
+                        onSettingsClick = { viewModel.toggleSettings() },
+                        onDismiss = { viewModel.hideAllDialogs() }
+                    )
+                }
+            }
 
+            // 目录抽屉
+            AnimatedVisibility(
+                uiState.showCatalog,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.75f)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        color = MaterialTheme.colorScheme.background,
+                        shape = shape,
+                    )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(
+                                model = uiState.book?.cover,
+                                // 可选：添加占位/错误状态
+                                placeholder = painterResource(R.drawable.skeleton),
+                                error = painterResource(R.drawable.skeleton)
+                            ),
+                            contentDescription = uiState.book?.name,
+                            modifier = Modifier
+                                .height(60.dp),
+                            contentScale = ContentScale.FillHeight
+                        )
+                        Column(modifier = Modifier.padding(start = 8.dp)) {
+                            Text(
+                                uiState.book?.name ?: "",
+                                style = MaterialTheme.typography.titleLarge,
+                                maxLines = 1
+                            )
+                            Text(
+                                uiState.book?.author ?: "",
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1
+                            )
+                        }
+                        IconButton(onClick = { navController.navigate("book/${uiState.book?.id}") }) {
+                            Icon(Icons.Default.ChevronRight, "goToDetail")
+                        }
+
+                    }
+                    CatalogDrawer(
+                        modifier = Modifier
+                            .weight(1f),
+                        isAscending = isAscending,
+                        state = lazyListState,
+                        catalog = uiState.catalog,
+                        currentChapterId = uiState.currentChapterId,
+                        onChapterSelected = { chapterId ->
+                            viewModel.loadChapter(
+                                chapterId
+                            )
+                        },
+                        onDismiss = { viewModel.toggleCatalog() },
+                        onReverseCatalog = { isAscending = !isAscending }
+                    )
                 }
 
             }
