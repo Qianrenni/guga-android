@@ -1,6 +1,7 @@
 package com.qianrenni.reading.viewmodels.book
 
 import android.app.Application
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.common.CommonPageStatus
@@ -12,6 +13,7 @@ import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.Catalog
 import com.qianrenni.reading.data.model.ReadEvent
 import com.qianrenni.reading.data.model.UpdateProgressRequest
+import com.qianrenni.reading.util.indexToCN
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -30,9 +32,11 @@ data class BookReadUiState(
     val showCatalog: Boolean = false,
     val showSettings: Boolean = false,
     val showBottomControls: Boolean = false,
-    val currentIndex: Int = -1,
+    val currentIndex: Int = 0,
     val currentPageIndex: Int = 0,
     val isSystemBarsHidden: Boolean = true,
+    val availableWidth: Dp? = null,
+    val availableHeight: Dp? = null,
     override val pageStatus: CommonPageStatus = CommonPageStatus()
 ) : CommonUiState
 
@@ -47,6 +51,10 @@ class BookReadViewModel(
 
     fun updatePages(pages: List<List<String>>) {
         _uiState.update { it.copy(pages = pages) }
+    }
+
+    fun updateScreen(width: Dp, height: Dp) {
+        _uiState.update { it.copy(availableWidth = width, availableHeight = height) }
     }
 
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
@@ -65,7 +73,7 @@ class BookReadViewModel(
             }
             catalogResult.onSuccess { data ->
                 val catalogList = data.toList()
-                    .mapIndexed { index, it -> it.copy(title = "第${index + 1}章 ${it.title}") }
+                    .mapIndexed { index, it -> it.copy(title = "第${indexToCN(index + 1)}章 ${it.title}") }
                 _uiState.update { it.copy(catalog = catalogList) }
                 val chapterIdToLoad = if (initialChapterId > 0) {
                     initialChapterId

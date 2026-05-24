@@ -24,8 +24,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +47,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,10 +79,19 @@ fun BookReadView(
     chapterId: Int = -1,
     viewModel: BookReadViewModel = viewModel()
 ) {
-    val activity = LocalContext.current as Activity
 
-    viewModel.loadBookAndCatalog(bookId, chapterId)
+    val activity = LocalContext.current as Activity
     val uiState by viewModel.uiState.collectAsState()
+    viewModel.loadBookAndCatalog(bookId, chapterId)
+    // 控制系统栏显示/隐藏
+    LaunchedEffect(uiState.isSystemBarsHidden) {
+        if (uiState.isSystemBarsHidden) {
+            SystemBarUtils.hideSystemBars(activity)
+        } else {
+            SystemBarUtils.showSystemBars(activity)
+        }
+    }
+
     var isAscending by remember { mutableStateOf(true) }
     var pageTextIndent by remember { mutableStateOf(BooleanArray(0)) }
     val lazyListState = rememberLazyListState()
@@ -94,14 +106,6 @@ fun BookReadView(
         }
     }
 
-    // 控制系统栏显示/隐藏
-    LaunchedEffect(uiState.isSystemBarsHidden) {
-        if (uiState.isSystemBarsHidden) {
-            SystemBarUtils.hideSystemBars(activity)
-        } else {
-            SystemBarUtils.showSystemBars(activity)
-        }
-    }
 
     // 当界面销毁时恢复系统栏显示
     DisposableEffect(Unit) {
@@ -126,28 +130,32 @@ fun BookReadView(
                     .fillMaxSize()
                     .background(color = MaterialTheme.colorScheme.background)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Icon(
-                        Icons.Default.ChevronLeft,
-                        "back step",
+                AnimatedVisibility(uiState.catalog.isNotEmpty()) {
+                    Text(
+                        uiState.catalog[uiState.currentIndex].title,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
-                            .clickable(onClick = { navController.popBackStack() })
+                            .fillMaxWidth()
                             .background(color = MaterialTheme.colorScheme.background)
                     )
-                    Text(uiState.catalog[uiState.currentIndex].title)
                 }
+                HorizontalDivider(
+                    Modifier.height(1.dp),
+                    DividerDefaults.Thickness,
+                    MaterialTheme.colorScheme.onBackground
+                )
                 BoxWithConstraints(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
                     LaunchedEffect(uiState.chapterContent, readSettings) {
-
-                        val availableHeight = maxHeight
-                        val availableWidth = maxWidth
+                        val availableHeight = uiState.availableHeight ?: maxHeight
+                        val availableWidth = uiState.availableWidth ?: maxWidth
+                        viewModel.updateScreen(availableWidth, availableHeight)
                         if (uiState.chapterContent.isNotEmpty()) {
                             withContext(Dispatchers.Default) {
                                 val newPages = mutableListOf<List<String>>()
@@ -196,7 +204,7 @@ fun BookReadView(
                                             )
                                         }.sumOf { it.size.height }
                                         // 使用 TextMeasurer 进行精确测量
-                                        if ((sumHeight + (textToMeasure.size - 2) * paddingPx) <= heightPx) {
+                                        if ((sumHeight + (textToMeasure.size - 1) * paddingPx) <= heightPx) {
                                             bestFitIndex = mid
                                             low = mid + 1
                                             best = textToMeasure

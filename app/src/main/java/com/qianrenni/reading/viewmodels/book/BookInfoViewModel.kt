@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.data.api.BookService
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.Catalog
+import com.qianrenni.reading.util.indexToCN
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,7 +54,15 @@ class BookInfoViewModel : ViewModel() {
                 // Catalog 返回的是数组
                 _uiState.update { state ->
                     state.copy(
-                        catalog = catalogList.mapIndexed { index, it -> it.copy(title = "第${index + 1}章 ${it.title}") },
+                        catalog = catalogList.mapIndexed { index, it ->
+                            it.copy(
+                                title = "第${
+                                    indexToCN(
+                                        index + 1
+                                    )
+                                }章 ${it.title}"
+                            )
+                        },
                         isLoading = false
                     )
                 }
