@@ -46,10 +46,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
@@ -64,11 +67,88 @@ import com.qianrenni.reading.components.ReadingSettings
 import com.qianrenni.reading.data.model.ReadSettings
 import com.qianrenni.reading.data.store.SettingsRepository
 import com.qianrenni.reading.util.SystemBarUtils
+import com.qianrenni.reading.viewmodels.book.BookReadUiState
 import com.qianrenni.reading.viewmodels.book.BookReadViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+suspend fun measureText(
+    density: Density,
+    textMeasurer: TextMeasurer,
+    uiState: BookReadUiState,
+    readSettings: ReadSettings,
+    viewModel: BookReadViewModel,
+    onCallBack: (BooleanArray) -> Unit
+) {
+    withContext(Dispatchers.Default) {
+        val newPages = mutableListOf<List<String>>()
+        var startIndex = 0
+        val totalLength = uiState.chapterContent.length
+        val heightPx = with(density) { uiState.availableHeight!!.toPx() - 16.sp.toPx() }
+        val widthPx = with(density) { uiState.availableWidth!!.toPx() - 16.dp.toPx() }
+        val paddingPx = with(density) { readSettings.fontSize.dp.toPx() }
+        val tempIsIndent = MutableList(1) { true }
+        while (startIndex < totalLength) {
+            // 初始猜测：从当前索引开始，向后移动约一页的字符数
+            var low = startIndex
+            var high = totalLength
+            var bestFitIndex = low
+            var textToMeasure: List<String>?
+            var best: List<String> = emptyList()
+            // 二分查找当前页能容纳的最大字符索引
+            while (low <= high) {
+                val mid = (low + high) / 2
+                textToMeasure =
+                    uiState.chapterContent.substring(startIndex, mid)
+                        .split("\n")
+                        .filter { it.isNotEmpty() }
+                val sumHeight = textToMeasure.mapIndexed { index, it ->
+                    textMeasurer.measure(
+                        text = it,
+                        style = TextStyle(
+                            fontSize = readSettings.fontSize.sp,
+                            lineHeight = readSettings.lineHeight.sp,
+                            letterSpacing = readSettings.letterSpacing.sp,
+                            fontFamily = readSettings.fontFamily,
+                            textIndent = if (index == 0) {
+                                if (tempIsIndent.last()) {
+                                    TextIndent(firstLine = (readSettings.fontSize * 2).sp)
+                                } else {
+                                    null
+                                }
+                            } else {
+                                TextIndent(firstLine = (readSettings.fontSize * 2).sp)
+                            },
+                        ),
+                        constraints = Constraints(
+                            maxWidth = widthPx.toInt(),
+                            maxHeight = Int.MAX_VALUE
+                        )
+                    )
+                }.sumOf { it.size.height }
+                // 使用 TextMeasurer 进行精确测量
+                if ((sumHeight + (textToMeasure.size - 1) * paddingPx) <= heightPx) {
+                    bestFitIndex = mid
+                    low = mid + 1
+                    best = textToMeasure
+                } else {
+                    high = mid - 1
+                }
+            }
+            best.let {
+                if (it.isNotEmpty()) {
+                    newPages.add(best)
+                    tempIsIndent.add(it.last().last() == '\n')
+                }  // 避免添加空页
+            }
+            startIndex = bestFitIndex
+        }
+        onCallBack(tempIsIndent.toBooleanArray())
+        viewModel.updatePages(newPages)
+    }
+}
 
 @Composable
 fun BookReadView(
@@ -134,73 +214,14 @@ fun BookReadView(
                     val availableWidth = uiState.availableWidth ?: maxWidth
                     viewModel.updateScreen(availableWidth, availableHeight)
                     if (uiState.chapterContent.isNotEmpty()) {
-                        withContext(Dispatchers.Default) {
-                            val newPages = mutableListOf<List<String>>()
-                            var startIndex = 0
-                            val totalLength = uiState.chapterContent.length
-                            val heightPx = with(density) { availableHeight.toPx() }
-                            val widthPx = with(density) { availableWidth.toPx() }
-                            val paddingPx = with(density) { readSettings.fontSize.dp.toPx() }
-                            val tempIsIndent = MutableList(1) { true }
-                            while (startIndex < totalLength) {
-                                // 初始猜测：从当前索引开始，向后移动约一页的字符数
-                                var low = startIndex
-                                var high = totalLength
-                                var bestFitIndex = low
-                                var textToMeasure: List<String>? = null
-                                var best: List<String> = emptyList()
-                                // 二分查找当前页能容纳的最大字符索引
-                                while (low <= high) {
-                                    val mid = (low + high) / 2
-                                    textToMeasure =
-                                        uiState.chapterContent.substring(startIndex, mid)
-                                            .split("\n")
-                                            .filter { it.isNotEmpty() }
-                                    val sumHeight = textToMeasure.mapIndexed { index, it ->
-                                        textMeasurer.measure(
-                                            text = it,
-                                            style = TextStyle(
-                                                fontSize = readSettings.fontSize.sp,
-                                                lineHeight = readSettings.lineHeight.sp,
-                                                letterSpacing = readSettings.letterSpacing.sp,
-                                                fontFamily = readSettings.fontFamily,
-                                                textIndent = if (index == 0) {
-                                                    if (tempIsIndent.last()) {
-                                                        TextIndent(firstLine = (readSettings.fontSize * 2).sp)
-                                                    } else {
-                                                        null
-                                                    }
-                                                } else {
-                                                    TextIndent(firstLine = (readSettings.fontSize * 2).sp)
-                                                },
-                                            ),
-                                            constraints = Constraints(
-                                                maxWidth = widthPx.toInt(),
-                                                maxHeight = Int.MAX_VALUE
-                                            )
-                                        )
-                                    }.sumOf { it.size.height }
-                                    // 使用 TextMeasurer 进行精确测量
-                                    if ((sumHeight + (textToMeasure.size - 1) * paddingPx) <= heightPx) {
-                                        bestFitIndex = mid
-                                        low = mid + 1
-                                        best = textToMeasure
-                                    } else {
-                                        high = mid - 1
-                                    }
-                                }
-                                best.let {
-                                    if (it.isNotEmpty()) {
-                                        newPages.add(best)
-                                        tempIsIndent.add(it.last().last() == '\n')
-                                    }  // 避免添加空页
-                                }
-                                startIndex = bestFitIndex
-                            }
-                            pageTextIndent = tempIsIndent.toBooleanArray()
-                            viewModel.updatePages(newPages)
-
-                        }
+                        measureText(
+                            density = density,
+                            textMeasurer = textMeasurer,
+                            uiState = uiState,
+                            readSettings = readSettings,
+                            viewModel = viewModel,
+                            onCallBack = { pageTextIndent = it }
+                        )
                     }
                 }
             }
@@ -224,14 +245,25 @@ fun BookReadView(
                         .fillMaxSize()
                         .clickable { viewModel.toggleSystemBars() }
                 ) { page ->
-                    ChapterPage(
-                        content = uiState.pages[page],
-                        settings = readSettings,
-                        firstIndent = pageTextIndent[page],
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .windowInsetsPadding(WindowInsets.statusBars)
-                    )
+                    ) {
+                        Text(
+                            uiState.catalog[uiState.currentIndex].title,
+                            modifier = Modifier.fillMaxWidth(),
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        ChapterPage(
+                            content = uiState.pages[page],
+                            settings = readSettings,
+                            firstIndent = pageTextIndent[page],
+                            modifier = Modifier
+                                .weight(1f)
+                        )
+                    }
                 }
             }
             AnimatedVisibility(
@@ -347,6 +379,7 @@ private fun ChapterPage(
         content.forEachIndexed { index, paragraph ->
             Text(
                 text = paragraph,
+                modifier = Modifier.padding(horizontal = 8.dp),
                 style = TextStyle(
                     fontSize = settings.fontSize.sp,
                     lineHeight = settings.lineHeight.sp,
