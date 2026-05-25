@@ -12,12 +12,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import kotlinx.coroutines.flow.filterNotNull
 
 @Composable
 fun <T> InfiniteVerticalPager(
     items: List<T>,
     modifier: Modifier = Modifier,
     initialItemIndex: Int = 0,
+    onPageChanged: ((Int) -> Unit)? = null,
     content: @Composable (item: T) -> Unit
 ) {
     if (items.isEmpty()) return
@@ -33,7 +35,21 @@ fun <T> InfiniteVerticalPager(
         initialPage = realFirstIndex + safeInitial,
         pageCount = { extendedCount }
     )
+    LaunchedEffect(pagerState, itemCount) {
+        snapshotFlow {
+            if (pagerState.isScrollInProgress) null
+            else pagerState.currentPage
+        }
+            .filterNotNull()
+            .collect { currentPage ->
+                when (currentPage) {
+                    0 -> {} // 克隆尾 -> 真实末页
+                    extendedCount - 1 -> {}      // 克隆头 -> 真实首页
+                    else -> onPageChanged?.invoke(currentPage - 1)     // 中间页 -> 真实索引
+                }
 
+            }
+    }
     // 监听滚动停止状态，到达克隆页时无动画瞬跳
     LaunchedEffect(Unit) {
         snapshotFlow { pagerState.currentPage to pagerState.isScrollInProgress }
@@ -67,6 +83,7 @@ fun <T> InfiniteHorizontalPager(
     items: List<T>,
     modifier: Modifier = Modifier,
     initialItemIndex: Int = 0,
+    onPageChanged: ((Int) -> Unit)? = null,
     content: @Composable (item: T) -> Unit
 ) {
     if (items.isEmpty()) return
@@ -80,9 +97,23 @@ fun <T> InfiniteHorizontalPager(
     val safeInitial = initialItemIndex.coerceIn(0, itemCount - 1)
     val pagerState = rememberPagerState(
         initialPage = realFirstIndex + safeInitial,
-        pageCount = { extendedCount }
+        pageCount = { extendedCount },
     )
+    LaunchedEffect(pagerState, itemCount) {
+        snapshotFlow {
+            if (pagerState.isScrollInProgress) null
+            else pagerState.currentPage
+        }
+            .filterNotNull()
+            .collect { currentPage ->
+                when (currentPage) {
+                    0 -> {}        // 克隆尾 -> 真实末页
+                    extendedCount - 1 -> {}     // 克隆头 -> 真实首页
+                    else -> onPageChanged?.invoke(currentPage - 1)     // 中间页 -> 真实索引
+                }
 
+            }
+    }
     // 监听滚动停止状态，到达克隆页时无动画瞬跳
     LaunchedEffect(Unit) {
         snapshotFlow { pagerState.currentPage to pagerState.isScrollInProgress }
