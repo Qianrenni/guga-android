@@ -54,7 +54,10 @@ class BookReadViewModel(
     }
 
     fun updateScreen(width: Dp, height: Dp) {
-        _uiState.update { it.copy(availableWidth = width, availableHeight = height) }
+        if (uiState.value.availableHeight == null) {
+            _uiState.update { it.copy(availableWidth = width, availableHeight = height) }
+        }
+
     }
 
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {

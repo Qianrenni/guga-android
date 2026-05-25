@@ -29,10 +29,11 @@ fun BottomControlBar(
     onNextClick: () -> Unit,
     onCatalogClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically

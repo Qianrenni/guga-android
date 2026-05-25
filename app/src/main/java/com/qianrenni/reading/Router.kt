@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.util.fastAny
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -41,7 +42,7 @@ fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) 
 
     // 定义需要显示底部导航栏的路由
     val routesWithBottomBar = listOf("home", "bookshelf", "history", "profile")
-
+    val routesWithoutPadding = listOf("read")
     // 2. 如果未登录，执行跳转
     LaunchedEffect(isLogin) {
         if (!isLogin) {
@@ -77,7 +78,7 @@ fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) 
     val currentBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry.value?.destination?.route
     val showBottomBar = currentRoute in routesWithBottomBar
-
+    val withOutPadding = routesWithoutPadding.fastAny { currentRoute?.startsWith(it) ?: false }
     Scaffold(
         modifier = Modifier.background(color = MaterialTheme.colorScheme.background),
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
@@ -90,7 +91,7 @@ fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) 
         NavHost(
             navController = navController,
             startDestination = "home",
-            modifier = Modifier.padding(innerPadding)
+            modifier = if (withOutPadding) Modifier else Modifier.padding(innerPadding)
         ) {
             // 登录页
             composable(
