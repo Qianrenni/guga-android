@@ -1,6 +1,8 @@
 package com.qianrenni.reading.viewmodels.book
 
 import android.app.Application
+import android.util.Log
+import androidx.collection.LruCache
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -46,7 +48,8 @@ class BookReadViewModel(
 
     private val _uiState = MutableStateFlow(BookReadUiState())
     val uiState: StateFlow<BookReadUiState> = _uiState.asStateFlow()
-
+    private val chapters = LruCache<Int, List<List<String>>>(3)
+    private val PAGE_SIZE = 3;
     private var heartbeatJob: Job? = null
 
     fun updatePages(pages: List<List<String>>) {
@@ -143,22 +146,14 @@ class BookReadViewModel(
     }
 
     fun goToPreviousChapter() {
-        val currentState = _uiState.value
-        val currentIndex =
-            currentState.catalog.indexOfFirst { it.id == currentState.currentChapterId }
-
-        if (currentIndex > 0) {
-            loadChapter(currentState.catalog[currentIndex - 1].id)
+        if (uiState.value.currentIndex > 0) {
+            loadChapter(uiState.value.catalog[uiState.value.currentIndex - 1].id)
         }
     }
 
     fun goToNextChapter() {
-        val currentState = _uiState.value
-        val currentIndex =
-            currentState.catalog.indexOfFirst { it.id == currentState.currentChapterId }
-
-        if (currentIndex < currentState.catalog.size - 1 && currentIndex >= 0) {
-            loadChapter(currentState.catalog[currentIndex + 1].id)
+        if (uiState.value.currentIndex < uiState.value.catalog.size - 1) {
+            loadChapter(uiState.value.catalog[uiState.value.currentIndex + 1].id)
         }
     }
 
@@ -204,6 +199,7 @@ class BookReadViewModel(
     }
 
     fun setCurrentPage(index: Int) {
+        Log.d("BOOKREADVIEWMODEL", "setCurrentPage: $index")
         _uiState.update { it.copy(currentPageIndex = index) }
     }
 

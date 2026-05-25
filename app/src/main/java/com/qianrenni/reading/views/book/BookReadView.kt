@@ -24,8 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
@@ -63,6 +61,7 @@ import com.qianrenni.reading.R
 import com.qianrenni.reading.components.BottomControlBar
 import com.qianrenni.reading.components.CatalogDrawer
 import com.qianrenni.reading.components.CommonPage
+import com.qianrenni.reading.components.InfiniteHorizontalPager
 import com.qianrenni.reading.components.ReadingSettings
 import com.qianrenni.reading.data.model.ReadSettings
 import com.qianrenni.reading.data.store.SettingsRepository
@@ -226,24 +225,12 @@ fun BookReadView(
                 }
             }
             if (uiState.pages.isNotEmpty()) {
-                val pagerState = rememberPagerState(
-                    pageCount = { uiState.pages.size },
-                    initialPage = uiState.currentPageIndex.coerceIn(
-                        0,
-                        maxOf(0, uiState.pages.size - 1)
-                    )
-                )
-                // 同步页码到 ViewModel
-                LaunchedEffect(pagerState.currentPage) {
-                    if (pagerState.currentPage != uiState.currentPageIndex) {
-                        viewModel.setCurrentPage(pagerState.currentPage)
-                    }
-                }
-                HorizontalPager(
-                    state = pagerState,
+                InfiniteHorizontalPager(
+                    items = uiState.pages.indices.toList(),
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable { viewModel.toggleSystemBars() }
+                        .clickable { viewModel.toggleSystemBars() },
+                    onPageChanged = { viewModel.setCurrentPage(it) }
                 ) { page ->
                     Column(
                         modifier = Modifier

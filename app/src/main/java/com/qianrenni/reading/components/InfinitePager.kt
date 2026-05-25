@@ -20,6 +20,8 @@ fun <T> InfiniteVerticalPager(
     modifier: Modifier = Modifier,
     initialItemIndex: Int = 0,
     onPageChanged: ((Int) -> Unit)? = null,
+    onBack: ((Int) -> Unit)? = null,
+    onForward: ((Int) -> Unit)? = null,
     content: @Composable (item: T) -> Unit
 ) {
     if (items.isEmpty()) return
@@ -28,11 +30,11 @@ fun <T> InfiniteVerticalPager(
     // 扩展总页数 = 原始数据 + 头部克隆1页 + 尾部克隆1页
     val extendedCount = itemCount + 2
     val realFirstIndex = 1
-    val realLastIndex = itemCount
 
     val safeInitial = initialItemIndex.coerceIn(0, itemCount - 1)
+    var lastPageIndex = realFirstIndex + safeInitial
     val pagerState = rememberPagerState(
-        initialPage = realFirstIndex + safeInitial,
+        initialPage = lastPageIndex,
         pageCount = { extendedCount }
     )
     LaunchedEffect(pagerState, itemCount) {
@@ -45,7 +47,15 @@ fun <T> InfiniteVerticalPager(
                 when (currentPage) {
                     0 -> {} // 克隆尾 -> 真实末页
                     extendedCount - 1 -> {}      // 克隆头 -> 真实首页
-                    else -> onPageChanged?.invoke(currentPage - 1)     // 中间页 -> 真实索引
+                    else -> {
+                        if (lastPageIndex < currentPage) {
+                            onForward?.invoke(currentPage - 1)
+                        } else if (lastPageIndex > currentPage) {
+                            onBack?.invoke(currentPage - 1)
+                        }
+                        onPageChanged?.invoke(currentPage - 1)
+                        lastPageIndex = currentPage
+                    }     // 中间页 -> 真实索引
                 }
 
             }
@@ -57,7 +67,7 @@ fun <T> InfiniteVerticalPager(
                 // 仅在手指抬起/滚动停止时触发跳转，避免滑动过程中抖动
                 if (!isScrolling) {
                     when (currentPage) {
-                        0 -> pagerState.scrollToPage(realLastIndex)          // 虚拟前置页 -> 瞬跳到真实末页
+                        0 -> pagerState.scrollToPage(itemCount)          // 虚拟前置页 -> 瞬跳到真实末页
                         extendedCount - 1 -> pagerState.scrollToPage(realFirstIndex) // 虚拟后置页 -> 瞬跳到真实首页
                     }
                 }
@@ -84,6 +94,8 @@ fun <T> InfiniteHorizontalPager(
     modifier: Modifier = Modifier,
     initialItemIndex: Int = 0,
     onPageChanged: ((Int) -> Unit)? = null,
+    onBack: ((Int) -> Unit)? = null,
+    onForward: ((Int) -> Unit)? = null,
     content: @Composable (item: T) -> Unit
 ) {
     if (items.isEmpty()) return
@@ -92,12 +104,12 @@ fun <T> InfiniteHorizontalPager(
     // 扩展总页数 = 原始数据 + 头部克隆1页 + 尾部克隆1页
     val extendedCount = itemCount + 2
     val realFirstIndex = 1
-    val realLastIndex = itemCount
 
     val safeInitial = initialItemIndex.coerceIn(0, itemCount - 1)
+    var lastPageIndex = realFirstIndex + safeInitial
     val pagerState = rememberPagerState(
-        initialPage = realFirstIndex + safeInitial,
-        pageCount = { extendedCount },
+        initialPage = lastPageIndex,
+        pageCount = { extendedCount }
     )
     LaunchedEffect(pagerState, itemCount) {
         snapshotFlow {
@@ -107,9 +119,17 @@ fun <T> InfiniteHorizontalPager(
             .filterNotNull()
             .collect { currentPage ->
                 when (currentPage) {
-                    0 -> {}        // 克隆尾 -> 真实末页
-                    extendedCount - 1 -> {}     // 克隆头 -> 真实首页
-                    else -> onPageChanged?.invoke(currentPage - 1)     // 中间页 -> 真实索引
+                    0 -> {} // 克隆尾 -> 真实末页
+                    extendedCount - 1 -> {}      // 克隆头 -> 真实首页
+                    else -> {
+                        if (lastPageIndex < currentPage) {
+                            onForward?.invoke(currentPage - 1)
+                        } else if (lastPageIndex > currentPage) {
+                            onBack?.invoke(currentPage - 1)
+                        }
+                        onPageChanged?.invoke(currentPage - 1)
+                        lastPageIndex = currentPage
+                    }     // 中间页 -> 真实索引
                 }
 
             }
@@ -121,7 +141,7 @@ fun <T> InfiniteHorizontalPager(
                 // 仅在手指抬起/滚动停止时触发跳转，避免滑动过程中抖动
                 if (!isScrolling) {
                     when (currentPage) {
-                        0 -> pagerState.scrollToPage(realLastIndex)          // 虚拟前置页 -> 瞬跳到真实末页
+                        0 -> pagerState.scrollToPage(itemCount)          // 虚拟前置页 -> 瞬跳到真实末页
                         extendedCount - 1 -> pagerState.scrollToPage(realFirstIndex) // 虚拟后置页 -> 瞬跳到真实首页
                     }
                 }
@@ -147,7 +167,7 @@ fun <T> InfiniteHorizontalPager(
 fun BannerCarouselDemo() {
     val banners = listOf("首页", "发现", "我的", "设置")
 
-    Column() {
+    Column {
         InfiniteHorizontalPager(
             items = banners,
             modifier = Modifier
