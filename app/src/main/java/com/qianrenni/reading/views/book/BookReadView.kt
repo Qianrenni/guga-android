@@ -2,6 +2,7 @@ package com.qianrenni.reading.views.book
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -66,27 +67,26 @@ import com.qianrenni.reading.components.ReadingSettings
 import com.qianrenni.reading.data.model.ReadSettings
 import com.qianrenni.reading.data.store.SettingsRepository
 import com.qianrenni.reading.util.SystemBarUtils
-import com.qianrenni.reading.viewmodels.book.BookReadUiState
 import com.qianrenni.reading.viewmodels.book.BookReadViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private val TAG = "BOOK READ VIEW"
 suspend fun measureText(
+    content: String,
     density: Density,
+    heightPx: Float,
+    widthPx: Float,
     textMeasurer: TextMeasurer,
-    uiState: BookReadUiState,
     readSettings: ReadSettings,
-    viewModel: BookReadViewModel,
-    onCallBack: (BooleanArray) -> Unit
+    onCallBack: (List<Boolean>, List<List<String>>) -> Unit
 ) {
     withContext(Dispatchers.Default) {
         val newPages = mutableListOf<List<String>>()
         var startIndex = 0
-        val totalLength = uiState.chapterContent.length
-        val heightPx = with(density) { uiState.availableHeight!!.toPx() - 16.sp.toPx() }
-        val widthPx = with(density) { uiState.availableWidth!!.toPx() - 16.dp.toPx() }
+        val totalLength = content.length
         val paddingPx = with(density) { readSettings.fontSize.dp.toPx() }
         val tempIsIndent = MutableList(1) { true }
         while (startIndex < totalLength) {
@@ -100,7 +100,7 @@ suspend fun measureText(
             while (low <= high) {
                 val mid = (low + high) / 2
                 textToMeasure =
-                    uiState.chapterContent.substring(startIndex, mid)
+                    content.substring(startIndex, mid)
                         .split("\n")
                         .filter { it.isNotEmpty() }
                 val sumHeight = textToMeasure.mapIndexed { index, it ->
@@ -144,8 +144,7 @@ suspend fun measureText(
             }
             startIndex = bestFitIndex
         }
-        onCallBack(tempIsIndent.toBooleanArray())
-        viewModel.updatePages(newPages)
+        onCallBack(tempIsIndent.toList(), newPages)
     }
 }
 
@@ -160,7 +159,9 @@ fun BookReadView(
 
     val activity = LocalContext.current as Activity
     val uiState by viewModel.uiState.collectAsState()
-    viewModel.loadBookAndCatalog(bookId, chapterId)
+    LaunchedEffect(Unit) {
+        viewModel.loadBookAndCatalog(bookId, chapterId)
+    }
     // 控制系统栏显示/隐藏
     LaunchedEffect(uiState.isSystemBarsHidden) {
         if (uiState.isSystemBarsHidden) {
@@ -171,7 +172,6 @@ fun BookReadView(
     }
 
     var isAscending by remember { mutableStateOf(true) }
-    var pageTextIndent by remember { mutableStateOf(BooleanArray(0)) }
     val lazyListState = rememberLazyListState()
     val settingsRepository =
         remember { SettingsRepository(context) }
@@ -195,6 +195,7 @@ fun BookReadView(
     // 分页逻辑
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
+    var availableHeight by remember { mutableStateOf(0.dp) }
     CommonPage(
         uiState = uiState,
     ) {
@@ -208,20 +209,34 @@ fun BookReadView(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.statusBars)
             ) {
-                LaunchedEffect(uiState.chapterContent, readSettings) {
-                    val availableHeight = uiState.availableHeight ?: maxHeight
-                    val availableWidth = uiState.availableWidth ?: maxWidth
-                    viewModel.updateScreen(availableWidth, availableHeight)
-                    if (uiState.chapterContent.isNotEmpty()) {
-                        measureText(
-                            density = density,
-                            textMeasurer = textMeasurer,
-                            uiState = uiState,
-                            readSettings = readSettings,
-                            viewModel = viewModel,
-                            onCallBack = { pageTextIndent = it }
-                        )
+
+                LaunchedEffect(Unit) {
+                    viewModel.viewModelScope.launch {
+                        availableHeight = maxHeight
+                        val height = with(density) { maxHeight.toPx() }
+                        val availableWidth = with(density) { maxWidth.toPx() }
+                        while (true) {
+                            val it = viewModel.bookChapterChannel.receive()
+                            if (it.chapterId > 0) {
+                                measureText(
+                                    content = it.chapterContent,
+                                    density = density,
+                                    textMeasurer = textMeasurer,
+                                    readSettings = readSettings,
+                                    heightPx = height,
+                                    widthPx = availableWidth,
+                                    onCallBack = { indents, contents ->
+                                        viewModel.addPages(
+                                            it.chapterId,
+                                            indents = indents,
+                                            contents = contents
+                                        )
+                                    }
+                                )
+                            }
+                        }
                     }
+
                 }
             }
             if (uiState.pages.isNotEmpty()) {
@@ -230,7 +245,14 @@ fun BookReadView(
                     modifier = Modifier
                         .fillMaxSize()
                         .clickable { viewModel.toggleSystemBars() },
-                    onPageChanged = { viewModel.setCurrentPage(it) }
+                    onForward = {
+                        viewModel.refreshPages(+1, it)
+                        Log.d(TAG, "BookReadView: onForward $it")
+                    },
+                    onBack = {
+                        viewModel.refreshPages(-1, it)
+                        Log.d(TAG, "BookReadView: onBack $it")
+                    }
                 ) { page ->
                     Column(
                         modifier = Modifier
@@ -244,9 +266,9 @@ fun BookReadView(
                             textAlign = TextAlign.Center
                         )
                         ChapterPage(
-                            content = uiState.pages[page],
+                            content = uiState.pages[page].contents,
                             settings = readSettings,
-                            firstIndent = pageTextIndent[page],
+                            firstIndent = uiState.pages[page].firstLineIndent,
                             modifier = Modifier
                                 .weight(1f)
                         )
@@ -267,7 +289,7 @@ fun BookReadView(
                         uiState.showCatalog,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height((uiState.availableHeight!! * 2 / 3))
+                            .height(availableHeight * 2 / 3)
                     ) {
                         Column(
                             modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
@@ -310,7 +332,7 @@ fun BookReadView(
                                 isAscending = isAscending,
                                 state = lazyListState,
                                 catalog = uiState.catalog,
-                                currentChapterId = uiState.currentChapterId,
+                                currentChapterId = uiState.catalog[uiState.currentIndex].id,
                                 onChapterSelected = { chapterId ->
                                     viewModel.loadChapter(
                                         chapterId
@@ -333,8 +355,6 @@ fun BookReadView(
                         )
                     }
                     BottomControlBar(
-                        canGoPrevious = uiState.currentIndex > 0,
-                        canGoNext = uiState.currentIndex < uiState.catalog.size - 1 && uiState.currentIndex >= 0,
                         onPreviousClick = { viewModel.goToPreviousChapter() },
                         onNextClick = { viewModel.goToNextChapter() },
                         onCatalogClick = {

@@ -23,8 +23,6 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun BottomControlBar(
-    canGoPrevious: Boolean,
-    canGoNext: Boolean,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     onCatalogClick: () -> Unit,
@@ -42,7 +40,6 @@ fun BottomControlBar(
         ControlButton(
             icon = Icons.AutoMirrored.Filled.ArrowLeft,
             label = "上一章",
-            enabled = canGoPrevious,
             onClick = {
                 onPreviousClick()
                 onDismiss()
@@ -53,7 +50,6 @@ fun BottomControlBar(
         ControlButton(
             icon = Icons.AutoMirrored.Filled.ArrowRight,
             label = "下一章",
-            enabled = canGoNext,
             onClick = {
                 onNextClick()
                 onDismiss()

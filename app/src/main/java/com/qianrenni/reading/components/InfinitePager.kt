@@ -122,10 +122,15 @@ fun <T> InfiniteHorizontalPager(
                     0 -> {} // 克隆尾 -> 真实末页
                     extendedCount - 1 -> {}      // 克隆头 -> 真实首页
                     else -> {
-                        if (lastPageIndex < currentPage) {
-                            onForward?.invoke(currentPage - 1)
-                        } else if (lastPageIndex > currentPage) {
-                            onBack?.invoke(currentPage - 1)
+                        val diff = currentPage - lastPageIndex
+                        when (diff) {
+                            -1, itemCount - 1 -> {
+                                onBack?.invoke(currentPage - 1)
+                            }
+
+                            1, -(itemCount - 1) -> {
+                                onForward?.invoke(currentPage - 1)
+                            }
                         }
                         onPageChanged?.invoke(currentPage - 1)
                         lastPageIndex = currentPage
