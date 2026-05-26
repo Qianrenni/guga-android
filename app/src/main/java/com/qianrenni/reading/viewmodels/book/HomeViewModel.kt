@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.data.api.BookService
 import com.qianrenni.reading.data.model.Book
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,7 +63,7 @@ class HomeViewModel : ViewModel() {
     }
 
     private fun loadCategories() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true, isError = false) }
             val result = BookService.getCategories()
             result.onSuccess { categories ->
@@ -91,7 +92,7 @@ class HomeViewModel : ViewModel() {
     }
 
     private fun loadBooksByCategory(category: String, offset: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true, isError = false) }
 
             val result = BookService.getBooksByCategory(category, offset, LIMIT)

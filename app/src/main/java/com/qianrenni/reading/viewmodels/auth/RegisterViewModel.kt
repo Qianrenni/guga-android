@@ -9,6 +9,7 @@ import com.qianrenni.reading.data.api.AuthService
 import com.qianrenni.reading.data.model.EmailVerifyRequest
 import com.qianrenni.reading.data.model.RegisterRequest
 import com.qianrenni.reading.data.model.UserRegister
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -64,7 +65,7 @@ class RegisterViewModel : ViewModel() {
 
         _registerState.update { it.copy(isVerifyingEmail = true) }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = AuthService.verifyEmail(EmailVerifyRequest(email = email))
             _registerState.update { it.copy(isVerifyingEmail = false) }
 
@@ -98,7 +99,7 @@ class RegisterViewModel : ViewModel() {
 
         _registerState.update { it.copy(pageStatus = it.pageStatus.loading()) }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = AuthService.register(
                 request = RegisterRequest(
                     user = UserRegister(

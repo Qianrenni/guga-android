@@ -7,6 +7,7 @@ import com.qianrenni.reading.data.api.BookService
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.Catalog
 import com.qianrenni.reading.util.indexToCN
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +31,7 @@ class BookInfoViewModel : ViewModel() {
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     fun loadBookInfo(bookId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true, isError = false) }
 
             // 并行加载书籍信息和目录
@@ -86,7 +87,7 @@ class BookInfoViewModel : ViewModel() {
     }
 
     private fun loadRecommendations(tags: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             if (tags.isEmpty()) return@launch
 
             val result = BookService.getRecommendations(tags)

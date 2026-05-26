@@ -13,6 +13,7 @@ import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.Catalog
 import com.qianrenni.reading.data.model.ReadEvent
 import com.qianrenni.reading.util.indexToCN
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -22,6 +23,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.internal.notifyAll
+import okhttp3.internal.wait
 
 data class BookChapter(val chapterId: Int, val chapterContent: String)
 data class PageChapterItem(
@@ -51,55 +54,84 @@ class BookReadViewModel(
     val uiState: StateFlow<BookReadUiState> = _uiState.asStateFlow()
     private val chaptersCache = LruCache<Int, List<PageChapterItem>>(5)
     val bookChapterChannel = Channel<BookChapter>()
+    val lock = Any()
     private val PAGE_SIZE = 3
     private var heartbeatJob: Job? = null
     var currentChapterPageIndex: Int = 0
-    var currentPageIndex: Int = 0
-    fun clear() {
-        chaptersCache.evictAll()
-        _uiState.update { it.copy(pages = emptyList()) }
+    var currentPageIndex = 0
+    private fun clear() {
+        synchronized(lock) {
+            chaptersCache.evictAll()
+            _uiState.update { it.copy(pages = emptyList()) }
+        }
     }
 
-    fun catalogIndexToLoad(index: Int): List<Int> {
+    private fun catalogIndexToLoad(index: Int): List<Int> {
         val catalog = uiState.value.catalog
         return listOf((index - 1 + catalog.size) % catalog.size, index, (index + 1) % catalog.size)
     }
 
-    fun refreshPages(step: Int = 0, currentPage: Int = currentPageIndex) {
-        val indexArr = IntArray(PAGE_SIZE)
-        val catalog = uiState.value.catalog
-        val indexes = catalogIndexToLoad(uiState.value.currentIndex)
-        val items = indexes.flatMapIndexed { index, it ->
-            val item = chaptersCache[catalog[it].id]!!
-            indexArr[index] = item.size
-            item
+    private fun lockForChapter(chapterId: Int) {
+        synchronized(lock) {
+            while (chaptersCache[chapterId] == null) {
+                _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
+                lock.wait()
+            }
         }
-        currentChapterPageIndex += step
-        val targetIndex = indexArr[0] + currentChapterPageIndex
-        var updateCurrentIndex = uiState.value.currentIndex
-        if (currentChapterPageIndex < 0) {
-            updateCurrentIndex = (updateCurrentIndex - 1 + catalog.size) % catalog.size
-            currentChapterPageIndex = indexArr[0] - 1
-        } else if (currentChapterPageIndex == indexArr[1]) {
-            updateCurrentIndex = (updateCurrentIndex + 1) % catalog.size
-            currentChapterPageIndex = 0
-        }
-        catalogIndexToLoad(updateCurrentIndex).forEach { loadChapter(catalog[it].id) }
+    }
 
-        val updateItems = listOf(targetIndex, targetIndex - 1, targetIndex + 1).map { items[it] }
-        val pagesOrder = listOf(
-            currentPage,
-            (currentPage - 1 + PAGE_SIZE) % PAGE_SIZE,
-            (currentPage + 1) % PAGE_SIZE
-        )
-        _uiState.update { state ->
-            state.copy(
-                pages = pagesOrder.zip(updateItems).sortedBy { it.first }.map { it.second },
-                currentIndex = updateCurrentIndex
+    fun refreshPages(step: Int = 0, currentPage: Int = currentPageIndex) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val catalog = uiState.value.catalog
+            var updateCurrentIndex = uiState.value.currentIndex
+            currentChapterPageIndex += step
+            var currentChapterId = catalog[updateCurrentIndex].id
+            lockForChapter(currentChapterId)
+            var items = chaptersCache[currentChapterId]!!
+            if (currentChapterPageIndex == -1) {
+                updateCurrentIndex = (updateCurrentIndex - 1 + catalog.size) % catalog.size
+                currentChapterId = catalog[updateCurrentIndex].id
+                lockForChapter(currentChapterId)
+                currentChapterPageIndex = chaptersCache[currentChapterId]!!.size - 1
+            } else if (currentChapterPageIndex == items.size) {
+                updateCurrentIndex = (updateCurrentIndex + 1 + catalog.size) % catalog.size
+                currentChapterId = catalog[updateCurrentIndex].id
+                lockForChapter(currentChapterId)
+                currentChapterPageIndex = 0
+            }
+            catalogIndexToLoad(updateCurrentIndex).forEach { loadChapter(catalog[it].id) }
+            items = chaptersCache[currentChapterId]!!
+            var targetIndex = currentChapterPageIndex
+            if (items.size - currentChapterPageIndex <= 1) {
+                val rightChapterId = catalog[(updateCurrentIndex + 1) % catalog.size].id
+                lockForChapter(rightChapterId)
+                items = items + chaptersCache[rightChapterId]!!
+            }
+            if (currentChapterPageIndex < 1) {
+                val leftChapterId =
+                    catalog[(updateCurrentIndex - 1 + catalog.size) % catalog.size].id
+                lockForChapter(leftChapterId)
+                items = chaptersCache[leftChapterId]!! + items
+                targetIndex += chaptersCache[leftChapterId]!!.size
+            }
+            val updateItems =
+                listOf(targetIndex, targetIndex - 1, targetIndex + 1).map { items[it] }
+            val pagesOrder = listOf(
+                currentPage,
+                (currentPage - 1 + PAGE_SIZE) % PAGE_SIZE,
+                (currentPage + 1) % PAGE_SIZE
             )
+            currentPageIndex = currentPage
+            _uiState.update { state ->
+                state.copy(
+                    pages = pagesOrder.zip(updateItems).sortedBy { it.first }.map { it.second },
+                    currentIndex = updateCurrentIndex,
+                    pageStatus = state.pageStatus.down()
+                )
+            }
+            Log.d(TAG, "refreshPages: ${uiState.value.pages}")
         }
-        Log.d(TAG, "refreshPages: ${uiState.value.pages}")
-        currentPageIndex = currentPage
+
     }
 
     fun addPages(chapterId: Int, indents: List<Boolean>, contents: List<List<String>>) {
@@ -109,14 +141,13 @@ class BookReadViewModel(
                 contents = strings
             )
         }
-        chaptersCache.put(chapterId, pageChapterItem)
-        if (chaptersCache.size() == PAGE_SIZE && uiState.value.pages.isEmpty()) {
-            refreshPages()
+        synchronized(lock) {
+            chaptersCache.put(chapterId, pageChapterItem)
+            lock.notifyAll()
         }
     }
 
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
-        clear()
         val currentState = _uiState.value
         if (currentState.pageStatus.isLoading
             || (currentState.book != null && currentState.book.id == bookId)
@@ -127,7 +158,7 @@ class BookReadViewModel(
             return
         }
         _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val bookJob = async { BookService.getBookById(bookId) }
             val catalogJob = async { BookService.getCatalog(bookId) }
             val bookResult = bookJob.await()
@@ -157,19 +188,19 @@ class BookReadViewModel(
                     catalogIndexToLoad(uiState.value.currentIndex).forEach {
                         loadChapter(catalog[it].id)
                     }
+                    refreshPages()
                 }
             }
-            _uiState.update { it.copy(pageStatus = it.pageStatus.down()) }
         }
     }
 
-    fun loadChapter(chapterId: Int) {
+    private fun loadChapter(chapterId: Int) {
         chaptersCache[chapterId]?.let {
             Log.d(TAG, "loadChapter: Cached $chapterId")
             return
         }
         val bookId = _uiState.value.book?.id ?: return
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             // 获取章节内容
             val result = BookService.getChapter(chapterId, bookId)
             result.onSuccess { data ->
@@ -179,31 +210,25 @@ class BookReadViewModel(
                         chapterContent = data
                     )
                 )
-                _uiState.update {
-                    it.copy(
-                        pageStatus = it.pageStatus.down()
-                    )
-                }
             }
         }
     }
 
-    fun goToPreviousChapter() {
+    fun goChapter(step: Int) {
+        require(step == 1 || step == -1)
         val currentIndex = uiState.value.currentIndex
         val catalog = uiState.value.catalog
-        val updateCurrentIndex = (currentIndex - 1 + catalog.size) % catalog.size
+        val updateCurrentIndex = (currentIndex + step + catalog.size) % catalog.size
         loadChapter(catalog[updateCurrentIndex].id)
         _uiState.update { it.copy(currentIndex = updateCurrentIndex) }
         currentChapterPageIndex = 0
         refreshPages()
     }
 
-    fun goToNextChapter() {
-        val currentIndex = uiState.value.currentIndex
-        val catalog = uiState.value.catalog
-        val updateCurrentIndex = (currentIndex + 1) % catalog.size
-        loadChapter(catalog[updateCurrentIndex].id)
-        _uiState.update { it.copy(currentIndex = updateCurrentIndex) }
+    fun goChapterId(chapterId: Int) {
+        val targetIndex = uiState.value.catalog.indexOfFirst { it.id == chapterId }
+        loadChapter(chapterId)
+        _uiState.update { it.copy(currentIndex = targetIndex) }
         currentChapterPageIndex = 0
         refreshPages()
     }
@@ -251,7 +276,7 @@ class BookReadViewModel(
 
 
     private fun reportChapterRead(chapterId: Int, eventType: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             uiState.value.book?.let { book ->
                 ReportService.reportChapterRead(
                     ReadEvent(
@@ -266,7 +291,7 @@ class BookReadViewModel(
 
     private fun startHeartbeat(chapterId: Int) {
         stopHeartbeat()
-        heartbeatJob = viewModelScope.launch {
+        heartbeatJob = viewModelScope.launch(Dispatchers.IO) {
             while (true) {
                 delay(10000) // 每10秒上报一次
                 reportChapterRead(chapterId, "heartbeat")
@@ -286,5 +311,6 @@ class BookReadViewModel(
             reportChapterRead(uiState.value.catalog[uiState.value.currentIndex].id, "exit")
         }
         stopHeartbeat()
+        clear()
     }
 }

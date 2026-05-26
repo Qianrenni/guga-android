@@ -11,6 +11,7 @@ import com.qianrenni.reading.data.model.AddShelfRequest
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.BookReadingProgress
 import com.qianrenni.reading.util.SnackBarManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +33,7 @@ class HistoryViewModel : ViewModel() {
 
     fun loadHistory() {
         if (_uiState.value.pageStatus.isLoading) return
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
             val historyItemsJob = async { ReadingProgressService.getReadingProgress() }
             val shelfItemsJob = async { ShelfService.getShelf() }
@@ -64,7 +65,7 @@ class HistoryViewModel : ViewModel() {
     }
 
     fun deleteHistory(bookId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = ReadingProgressService.deleteReadingProgress(bookId)
             result.onSuccess {
 
@@ -82,7 +83,7 @@ class HistoryViewModel : ViewModel() {
     }
 
     fun addToShelf(bookId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result =
                 ShelfService.addToShelf(AddShelfRequest(book_id = bookId))
             result.onEmpty {

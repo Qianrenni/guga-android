@@ -211,7 +211,7 @@ fun BookReadView(
             ) {
 
                 LaunchedEffect(Unit) {
-                    viewModel.viewModelScope.launch {
+                    viewModel.viewModelScope.launch(Dispatchers.Default) {
                         availableHeight = maxHeight
                         val height = with(density) { maxHeight.toPx() }
                         val availableWidth = with(density) { maxWidth.toPx() }
@@ -334,9 +334,7 @@ fun BookReadView(
                                 catalog = uiState.catalog,
                                 currentChapterId = uiState.catalog[uiState.currentIndex].id,
                                 onChapterSelected = { chapterId ->
-                                    viewModel.loadChapter(
-                                        chapterId
-                                    )
+                                    viewModel.goChapterId(chapterId)
                                 },
                                 onDismiss = { viewModel.toggleCatalog() },
                                 onReverseCatalog = { isAscending = !isAscending }
@@ -348,15 +346,15 @@ fun BookReadView(
                         ReadingSettings(
                             settings = readSettings,
                             onSettingsChange = { newSettings ->
-                                viewModel.viewModelScope.launch {
+                                viewModel.viewModelScope.launch(Dispatchers.IO) {
                                     settingsRepository.updateSettings(newSettings)
                                 }
                             },
                         )
                     }
                     BottomControlBar(
-                        onPreviousClick = { viewModel.goToPreviousChapter() },
-                        onNextClick = { viewModel.goToNextChapter() },
+                        onPreviousClick = { viewModel.goChapter(-1) },
+                        onNextClick = { viewModel.goChapter(+1) },
                         onCatalogClick = {
                             viewModel.toggleCatalog()
                         },

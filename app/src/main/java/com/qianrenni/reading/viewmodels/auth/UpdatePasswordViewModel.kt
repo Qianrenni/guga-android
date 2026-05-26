@@ -7,6 +7,7 @@ import com.qianrenni.reading.common.CommonUiState
 import com.qianrenni.reading.data.api.UserService
 import com.qianrenni.reading.data.model.UpdatePasswordRequest
 import com.qianrenni.reading.data.store.AuthStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -78,7 +79,7 @@ class UpdatePasswordViewModel : ViewModel() {
 
         _updatePasswordState.update { it.copy(pageStatus = it.pageStatus.loading()) }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = UserService.updatePassword(
                 UpdatePasswordRequest(
                     username = state.email,

@@ -10,6 +10,7 @@ import com.qianrenni.reading.data.api.ShelfService
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.ShelfItem
 import com.qianrenni.reading.util.SnackBarManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +32,7 @@ class ShelfViewModel : ViewModel() {
 
     fun loadShelf() {
         if (uiState.value.pageStatus.isLoading) return
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
 
             val shelfItemsJob = async { ShelfService.getShelf() }
@@ -77,7 +78,7 @@ class ShelfViewModel : ViewModel() {
 
 
     fun removeFromShelf(bookId: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = ShelfService.removeFromShelf(bookId)
             result.onEmpty {
                 SnackBarManager.showMessage("删除成功")

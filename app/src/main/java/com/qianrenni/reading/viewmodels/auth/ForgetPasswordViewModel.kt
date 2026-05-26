@@ -6,6 +6,7 @@ import com.qianrenni.reading.common.CommonPageStatus
 import com.qianrenni.reading.common.CommonUiState
 import com.qianrenni.reading.data.api.UserService
 import com.qianrenni.reading.data.model.ForgotPasswordRequest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -70,7 +71,7 @@ class ForgetPasswordViewModel : ViewModel() {
             )
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = UserService.sendForgotPasswordCode(email)
             _forgetPasswordState.update { it.copy(isSendingCode = false) }
 
@@ -107,7 +108,7 @@ class ForgetPasswordViewModel : ViewModel() {
 
         _forgetPasswordState.update { it.copy(pageStatus = it.pageStatus.loading()) }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = UserService.resetPassword(
                 ForgotPasswordRequest(
                     user_account = state.email,
