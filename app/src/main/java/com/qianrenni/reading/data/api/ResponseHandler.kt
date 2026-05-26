@@ -20,10 +20,10 @@ sealed class NetworkResult<out T> {
     ) : NetworkResult<Nothing>()
 
     // 函数式风格处理
-    fun fold(
-        onSuccess: (T) -> Unit = {},
-        onFailure: (String, Int?, Throwable?) -> Unit = { _, _, _ -> },
-        onEmpty: () -> Unit = {}
+    suspend fun fold(
+        onSuccess: suspend (T) -> Unit = {},
+        onFailure: suspend (String, Int?, Throwable?) -> Unit = { _, _, _ -> },
+        onEmpty: suspend () -> Unit = {}
     ): NetworkResult<T> {
         when (this) {
             is Success -> onSuccess(data)
@@ -33,21 +33,21 @@ sealed class NetworkResult<out T> {
         return this
     }
 
-    fun <R> onSuccess(block: (T) -> R): R? {
+    suspend fun <R> onSuccess(block: suspend (T) -> R): R? {
         return when (this) {
             is Success -> block(data)
             else -> null
         }
     }
 
-    fun <R> onFailure(block: (String, Int?, Throwable?) -> R): R? {
+    suspend fun <R> onFailure(block: suspend (String, Int?, Throwable?) -> R): R? {
         return when (this) {
             is Failure -> block(message, code, exception)
             else -> null
         }
     }
 
-    fun <R> onEmpty(block: () -> R): R? {
+    suspend fun <R> onEmpty(block: suspend () -> R): R? {
         return when (this) {
             is Empty -> block()
             else -> null

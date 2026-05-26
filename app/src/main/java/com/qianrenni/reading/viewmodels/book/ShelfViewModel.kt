@@ -80,9 +80,7 @@ class ShelfViewModel : ViewModel() {
         viewModelScope.launch {
             val result = ShelfService.removeFromShelf(bookId)
             result.onEmpty {
-                this.launch {
-                    SnackBarManager.showMessage("删除成功")
-                }
+                SnackBarManager.showMessage("删除成功")
                 _uiState.update { state ->
                     state.copy(
                         shelfItems = state.shelfItems.filter { it.book_id != bookId },
@@ -90,9 +88,7 @@ class ShelfViewModel : ViewModel() {
                 }
             }
             result.onFailure { msg, _, _ ->
-                this.launch {
-                    SnackBarManager.showMessage(msg)
-                }
+                SnackBarManager.showMessage(msg)
             }
         }
     }

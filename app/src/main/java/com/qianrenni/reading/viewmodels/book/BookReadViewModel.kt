@@ -164,20 +164,21 @@ class BookReadViewModel(
     }
 
     fun loadChapter(chapterId: Int) {
-        chaptersCache.get(chapterId)?.let { return }
+        chaptersCache[chapterId]?.let {
+            Log.d(TAG, "loadChapter: Cached $chapterId")
+            return
+        }
         val bookId = _uiState.value.book?.id ?: return
         viewModelScope.launch {
             // 获取章节内容
             val result = BookService.getChapter(chapterId, bookId)
             result.onSuccess { data ->
-                this.launch {
-                    bookChapterChannel.send(
-                        BookChapter(
-                            chapterId = chapterId,
-                            chapterContent = data
-                        )
+                bookChapterChannel.send(
+                    BookChapter(
+                        chapterId = chapterId,
+                        chapterContent = data
                     )
-                }
+                )
                 _uiState.update {
                     it.copy(
                         pageStatus = it.pageStatus.down()

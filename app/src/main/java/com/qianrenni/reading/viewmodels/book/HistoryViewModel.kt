@@ -67,19 +67,16 @@ class HistoryViewModel : ViewModel() {
         viewModelScope.launch {
             val result = ReadingProgressService.deleteReadingProgress(bookId)
             result.onSuccess {
-                this.launch {
-                    SnackBarManager.showMessage("删除成功")
-                }
+
                 _uiState.update { state ->
                     state.copy(
                         historyItems = state.historyItems.filter { it.book_id != bookId },
                         books = state.books.filter { it.id != bookId })
                 }
+                SnackBarManager.showMessage("删除成功")
             }
             result.onFailure { msg, _, _ ->
-                this.launch {
-                    SnackBarManager.showMessage(msg)
-                }
+                SnackBarManager.showMessage(msg)
             }
         }
     }
@@ -89,17 +86,14 @@ class HistoryViewModel : ViewModel() {
             val result =
                 ShelfService.addToShelf(AddShelfRequest(book_id = bookId))
             result.onEmpty {
-                this.launch {
-                    SnackBarManager.showMessage("添加成功")
-                }
+
                 _uiState.update { state ->
                     state.copy(shelfIds = state.shelfIds + bookId)
                 }
+                SnackBarManager.showMessage("添加成功")
             }
             result.onFailure { msg, _, _ ->
-                this.launch {
-                    SnackBarManager.showMessage(msg)
-                }
+                SnackBarManager.showMessage(msg)
             }
         }
     }
