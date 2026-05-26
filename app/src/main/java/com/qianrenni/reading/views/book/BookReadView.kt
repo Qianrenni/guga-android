@@ -241,7 +241,7 @@ fun BookReadView(
             }
             if (uiState.pages.isNotEmpty()) {
                 InfiniteHorizontalPager(
-                    items = uiState.pages.indices.toList(),
+                    items = uiState.pages,
                     modifier = Modifier
                         .fillMaxSize()
                         .clickable { viewModel.toggleSystemBars() },
@@ -266,9 +266,9 @@ fun BookReadView(
                             textAlign = TextAlign.Center
                         )
                         ChapterPage(
-                            content = uiState.pages[page].contents,
+                            content = page.contents,
                             settings = readSettings,
-                            firstIndent = uiState.pages[page].firstLineIndent,
+                            firstIndent = page.firstLineIndent,
                             modifier = Modifier
                                 .weight(1f)
                         )
