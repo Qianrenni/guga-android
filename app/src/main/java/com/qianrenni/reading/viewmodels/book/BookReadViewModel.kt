@@ -8,10 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.qianrenni.reading.common.CommonPageStatus
 import com.qianrenni.reading.common.CommonUiState
 import com.qianrenni.reading.data.api.BookService
+import com.qianrenni.reading.data.api.ReadingProgressService
 import com.qianrenni.reading.data.api.ReportService
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.Catalog
 import com.qianrenni.reading.data.model.ReadEvent
+import com.qianrenni.reading.data.model.UpdateProgressRequest
 import com.qianrenni.reading.util.indexToCN
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -89,15 +91,40 @@ class BookReadViewModel(
             lockForChapter(currentChapterId)
             var items = chaptersCache[currentChapterId]!!
             if (currentChapterPageIndex == -1) {
+                stopHeartbeat()
+                reportChapterRead(catalog[updateCurrentIndex].id, "exit")
                 updateCurrentIndex = (updateCurrentIndex - 1 + catalog.size) % catalog.size
                 currentChapterId = catalog[updateCurrentIndex].id
                 lockForChapter(currentChapterId)
                 currentChapterPageIndex = chaptersCache[currentChapterId]!!.size - 1
+                uiState.value.book?.let {
+                    ReadingProgressService.updateReadingProgress(
+                        UpdateProgressRequest(
+                            it.id,
+                            currentChapterId
+                        )
+                    )
+                }
+                reportChapterRead(currentChapterId, "enter")
+                startHeartbeat(currentChapterId)
             } else if (currentChapterPageIndex == items.size) {
+                stopHeartbeat()
+                reportChapterRead(catalog[updateCurrentIndex].id, "exit")
                 updateCurrentIndex = (updateCurrentIndex + 1 + catalog.size) % catalog.size
                 currentChapterId = catalog[updateCurrentIndex].id
                 lockForChapter(currentChapterId)
                 currentChapterPageIndex = 0
+                uiState.value.book?.let {
+                    ReadingProgressService.updateReadingProgress(
+                        UpdateProgressRequest(
+                            it.id,
+                            currentChapterId
+                        )
+                    )
+                }
+                reportChapterRead(currentChapterId, "enter")
+                startHeartbeat(currentChapterId)
+
             }
             catalogIndexToLoad(updateCurrentIndex).forEach { loadChapter(catalog[it].id) }
             items = chaptersCache[currentChapterId]!!
@@ -152,9 +179,11 @@ class BookReadViewModel(
         if (currentState.pageStatus.isLoading
             || (currentState.book != null && currentState.book.id == bookId)
         ) {
+            refreshPages()
             return
         }
         if (currentState.catalog.isNotEmpty() && currentState.currentIndex != -1 && currentState.catalog[currentState.currentIndex].id == initialChapterId) {
+            refreshPages()
             return
         }
         _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
@@ -188,6 +217,14 @@ class BookReadViewModel(
                     catalogIndexToLoad(uiState.value.currentIndex).forEach {
                         loadChapter(catalog[it].id)
                     }
+                    ReadingProgressService.updateReadingProgress(
+                        UpdateProgressRequest(
+                            bookId,
+                            chapterIdToLoad
+                        )
+                    )
+                    reportChapterRead(chapterIdToLoad, "enter")
+                    startHeartbeat(chapterIdToLoad)
                     refreshPages()
                 }
             }
