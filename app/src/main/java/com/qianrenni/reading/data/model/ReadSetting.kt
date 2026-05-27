@@ -2,33 +2,32 @@ package com.qianrenni.reading.data.model
 
 import androidx.compose.ui.text.font.FontFamily
 
+enum class Themes(
+    val label: String,
+    val textColor: Int,
+    val backgroundColor: Int
+) {
+    EyeTheme(
+        label = "护眼",
+        textColor = 0xff2d4a2d.toInt(),
+        backgroundColor = 0xffc7edcc.toInt()
+    ),
+    PaperTheme(
+        label = "纹理",
+        textColor = 0xff5b4636.toInt(),
+        backgroundColor = 0xfff5f0e1.toInt()
+    )
+}
 
 data class ReadSettings(
     val fontSize: Float = 18f,
     val lineHeight: Float = 30f,
     val letterSpacing: Float = 2f,
     val fontFamily: FontFamily = FontFamily.Default,
-    val textColor: String = "#333333",
-    val backgroundColor: String = "#ffffff"
+    val textColor: Int,
+    val backgroundColor: Int
 ) {
-    companion object {
-        val DayTheme = ReadSettings(
-            textColor = "#333333",
-            backgroundColor = "#ffffff"
-        )
-        val NightTheme = ReadSettings(
-            textColor = "#b0b0b0",
-            backgroundColor = "#1a1a1a"
-        )
-        val EyeTheme = ReadSettings(
-            textColor = "#2d4a2d",
-            backgroundColor = "#c7edcc"
-        )
-        val PaperTheme = ReadSettings(
-            textColor = "#5b4636",
-            backgroundColor = "#f5f0e1"
-        )
-    }
+
 }
 
 enum class ReadFontFamily(val displayName: String, val value: FontFamily) {

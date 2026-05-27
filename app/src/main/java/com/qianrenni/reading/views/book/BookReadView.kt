@@ -41,6 +41,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -73,7 +75,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val TAG = "BOOK READ VIEW"
+private const val TAG = "BOOK READ VIEW"
 suspend fun measureText(
     content: String,
     density: Density,
@@ -173,13 +175,22 @@ fun BookReadView(
 
     var isAscending by remember { mutableStateOf(true) }
     val lazyListState = rememberLazyListState()
+    val colorScheme = MaterialTheme.colorScheme
     val settingsRepository =
-        remember { SettingsRepository(context) }
-    var readSettings by remember { mutableStateOf(ReadSettings()) }
+        remember { SettingsRepository(context, colorScheme) }
+    var readSettings by remember {
+        mutableStateOf(
+            ReadSettings(
+                textColor = colorScheme.onBackground.toArgb(),
+                backgroundColor = colorScheme.background.toArgb()
+            )
+        )
+    }
 
     // 收集阅读设置
     LaunchedEffect(Unit) {
         settingsRepository.readSettings.collectLatest { settings ->
+            Log.d(TAG, "BookReadView:  $settings")
             readSettings = settings
         }
     }
@@ -202,7 +213,7 @@ fun BookReadView(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = MaterialTheme.colorScheme.background)
+                .background(color = Color(readSettings.backgroundColor))
         ) {
             BoxWithConstraints(
                 modifier = Modifier
@@ -393,6 +404,7 @@ private fun ChapterPage(
                 text = paragraph,
                 modifier = Modifier.padding(horizontal = 8.dp),
                 style = TextStyle(
+                    color = Color(settings.textColor),
                     fontSize = settings.fontSize.sp,
                     lineHeight = settings.lineHeight.sp,
                     letterSpacing = settings.letterSpacing.sp,

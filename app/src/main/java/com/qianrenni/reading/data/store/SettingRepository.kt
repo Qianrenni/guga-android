@@ -2,11 +2,14 @@ package com.qianrenni.reading.data.store
 
 
 import android.content.Context
+import androidx.compose.material3.ColorScheme
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontFamily
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.qianrenni.reading.data.model.ReadFontFamily
@@ -16,14 +19,14 @@ import kotlinx.coroutines.flow.map
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "read_settings")
 
-class SettingsRepository(private val context: Context) {
+class SettingsRepository(private val context: Context, private val colorScheme: ColorScheme) {
     private object PreferencesKeys {
         val FONT_SIZE = floatPreferencesKey("font_size")
         val LINE_HEIGHT = floatPreferencesKey("line_height")
         val LETTER_SPACING = floatPreferencesKey("letter_spacing")
         val FONT_FAMILY = stringPreferencesKey("font_family")
-        val TEXT_COLOR = stringPreferencesKey("text_color")
-        val BACKGROUND_COLOR = stringPreferencesKey("background_color")
+        val TEXT_COLOR = intPreferencesKey("text_color")
+        val BACKGROUND_COLOR = intPreferencesKey("background_color")
     }
 
     val readSettings: Flow<ReadSettings> = context.dataStore.data.map { preferences ->
@@ -33,8 +36,10 @@ class SettingsRepository(private val context: Context) {
             letterSpacing = preferences[PreferencesKeys.LETTER_SPACING] ?: 2f,
             fontFamily = ReadFontFamily.entries.find { it.displayName == preferences[PreferencesKeys.FONT_FAMILY] }?.value
                 ?: FontFamily.Default,
-            textColor = preferences[PreferencesKeys.TEXT_COLOR] ?: "#333333",
-            backgroundColor = preferences[PreferencesKeys.BACKGROUND_COLOR] ?: "#ffffff"
+            textColor = preferences[PreferencesKeys.TEXT_COLOR]
+                ?: colorScheme.onBackground.toArgb(),
+            backgroundColor = preferences[PreferencesKeys.BACKGROUND_COLOR]
+                ?: colorScheme.background.toArgb()
         )
     }
 
