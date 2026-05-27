@@ -77,7 +77,9 @@ class BookReadViewModel(
         synchronized(lock) {
             while (chaptersCache[chapterId] == null) {
                 _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
+                Log.d(TAG, "lockForChapter: $chapterId")
                 lock.wait()
+                Log.d(TAG, "lockForChapter: retry $chapterId")
             }
         }
     }
