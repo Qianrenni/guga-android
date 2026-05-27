@@ -30,8 +30,7 @@ import okhttp3.internal.wait
 
 data class BookChapter(val chapterId: Int, val chapterContent: String)
 data class PageChapterItem(
-    val contents: List<String>,
-    val firstLineIndent: Boolean
+    val contents: List<String>, val firstLineIndent: Boolean
 )
 
 data class BookReadUiState(
@@ -58,7 +57,7 @@ class BookReadViewModel(
     private val chaptersCache = LruCache<Int, List<PageChapterItem>>(5)
     val bookChapterChannel = Channel<BookChapter>()
     val lock = Any()
-    private val PAGE_SIZE = 3
+    private val pageSize = 3
     private var heartbeatJob: Job? = null
     var currentChapterPageIndex: Int = 0
 
@@ -69,9 +68,15 @@ class BookReadViewModel(
         }
     }
 
-    private fun catalogIndexToLoad(index: Int): List<Int> {
+    private fun catalogIndexToLoad(index: Int) {
         val catalog = uiState.value.catalog
-        return listOf((index - 1 + catalog.size) % catalog.size, index, (index + 1) % catalog.size)
+        listOf(
+            (index - 1 + catalog.size) % catalog.size,
+            index,
+            (index + 1) % catalog.size
+        ).forEach {
+            loadChapter(catalog[it].id)
+        }
     }
 
     private fun lockForChapter(chapterId: Int) {
@@ -104,8 +109,7 @@ class BookReadViewModel(
                 uiState.value.book?.let {
                     ReadingProgressService.updateReadingProgress(
                         UpdateProgressRequest(
-                            it.id,
-                            currentChapterId
+                            it.id, currentChapterId
                         )
                     )
                 }
@@ -121,8 +125,7 @@ class BookReadViewModel(
                 uiState.value.book?.let {
                     ReadingProgressService.updateReadingProgress(
                         UpdateProgressRequest(
-                            it.id,
-                            currentChapterId
+                            it.id, currentChapterId
                         )
                     )
                 }
@@ -130,7 +133,7 @@ class BookReadViewModel(
                 startHeartbeat(currentChapterId)
 
             }
-            catalogIndexToLoad(updateCurrentIndex).forEach { loadChapter(catalog[it].id) }
+            catalogIndexToLoad(updateCurrentIndex)
             items = chaptersCache[currentChapterId]!!
             var targetIndex = currentChapterPageIndex
             if (items.size - currentChapterPageIndex <= 1) {
@@ -149,12 +152,13 @@ class BookReadViewModel(
                 listOf(targetIndex, targetIndex - 1, targetIndex + 1).map { items[it] }
             val pagesOrder = listOf(
                 currentPage,
-                (currentPage - 1 + PAGE_SIZE) % PAGE_SIZE,
-                (currentPage + 1) % PAGE_SIZE
+                (currentPage - 1 + pageSize) % pageSize,
+                (currentPage + 1) % pageSize
             )
             _uiState.update { state ->
                 state.copy(
-                    pages = pagesOrder.zip(updateItems).sortedBy { it.first }.map { it.second },
+                    pages = pagesOrder.zip(updateItems).sortedBy { it.first }
+                        .map { it.second },
                     currentIndex = updateCurrentIndex,
                     pageStatus = state.pageStatus.down(),
                     currentPageIndex = currentPage
@@ -168,8 +172,7 @@ class BookReadViewModel(
     fun addPages(chapterId: Int, indents: List<Boolean>, contents: List<List<String>>) {
         val pageChapterItem = contents.mapIndexed { index, strings ->
             PageChapterItem(
-                firstLineIndent = indents[index],
-                contents = strings
+                firstLineIndent = indents[index], contents = strings
             )
         }
         synchronized(lock) {
@@ -181,14 +184,7 @@ class BookReadViewModel(
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
         clear()
         val currentState = _uiState.value
-        if (currentState.pageStatus.isLoading
-            || (currentState.book != null && currentState.book.id == bookId)
-        ) {
-            refreshPages()
-            return
-        }
-        if (currentState.catalog.isNotEmpty() && currentState.currentIndex != -1 && currentState.catalog[currentState.currentIndex].id == initialChapterId) {
-            refreshPages()
+        if (currentState.pageStatus.isLoading) {
             return
         }
         _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
@@ -218,14 +214,10 @@ class BookReadViewModel(
                             currentIndex = it.catalog.indexOfFirst { item -> item.id == chapterIdToLoad },
                         )
                     }
-                    val catalog = uiState.value.catalog
-                    catalogIndexToLoad(uiState.value.currentIndex).forEach {
-                        loadChapter(catalog[it].id)
-                    }
+                    catalogIndexToLoad(uiState.value.currentIndex)
                     ReadingProgressService.updateReadingProgress(
                         UpdateProgressRequest(
-                            bookId,
-                            chapterIdToLoad
+                            bookId, chapterIdToLoad
                         )
                     )
                     reportChapterRead(chapterIdToLoad, "enter")
@@ -248,8 +240,7 @@ class BookReadViewModel(
             result.onSuccess { data ->
                 bookChapterChannel.send(
                     BookChapter(
-                        chapterId = chapterId,
-                        chapterContent = data
+                        chapterId = chapterId, chapterContent = data
                     )
                 )
             }
@@ -322,9 +313,7 @@ class BookReadViewModel(
             uiState.value.book?.let { book ->
                 ReportService.reportChapterRead(
                     ReadEvent(
-                        book_id = book.id,
-                        chapter_id = chapterId,
-                        event_type = eventType
+                        book_id = book.id, chapter_id = chapterId, event_type = eventType
                     )
                 )
             }

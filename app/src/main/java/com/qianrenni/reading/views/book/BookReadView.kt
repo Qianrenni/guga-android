@@ -218,23 +218,21 @@ fun BookReadView(
                             with(density) { maxWidth.toPx() - 16.dp.toPx() }
                         while (true) {
                             val it = viewModel.bookChapterChannel.receive()
-                            if (it.chapterId > 0) {
-                                measureText(
-                                    content = it.chapterContent,
-                                    density = density,
-                                    textMeasurer = textMeasurer,
-                                    readSettings = readSettings,
-                                    heightPx = height,
-                                    widthPx = availableWidth,
-                                    onCallBack = { indents, contents ->
-                                        viewModel.addPages(
-                                            it.chapterId,
-                                            indents = indents,
-                                            contents = contents
-                                        )
-                                    }
-                                )
-                            }
+                            measureText(
+                                content = it.chapterContent,
+                                density = density,
+                                textMeasurer = textMeasurer,
+                                readSettings = readSettings,
+                                heightPx = height,
+                                widthPx = availableWidth,
+                                onCallBack = { indents, contents ->
+                                    viewModel.addPages(
+                                        it.chapterId,
+                                        indents = indents,
+                                        contents = contents
+                                    )
+                                }
+                            )
                         }
                     }
 
@@ -345,7 +343,7 @@ fun BookReadView(
                                 onChapterSelected = { chapterId ->
                                     viewModel.goChapterId(chapterId)
                                 },
-                                onDismiss = { viewModel.toggleCatalog() },
+                                onDismiss = { viewModel.hideAllDialogs() },
                                 onReverseCatalog = { isAscending = !isAscending }
                             )
                         }
