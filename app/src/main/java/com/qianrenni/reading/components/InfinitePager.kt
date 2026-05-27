@@ -1,5 +1,6 @@
 package com.qianrenni.reading.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
@@ -118,6 +119,7 @@ fun <T> InfiniteHorizontalPager(
         }
             .filterNotNull()
             .collect { currentPage ->
+                Log.d("InfiniteHorizontalPager", "currentPage $currentPage ")
                 when (currentPage) {
                     0 -> {} // 克隆尾 -> 真实末页
                     extendedCount - 1 -> {}      // 克隆头 -> 真实首页
@@ -147,7 +149,10 @@ fun <T> InfiniteHorizontalPager(
                 if (!isScrolling) {
                     when (currentPage) {
                         0 -> pagerState.scrollToPage(itemCount)          // 虚拟前置页 -> 瞬跳到真实末页
-                        extendedCount - 1 -> pagerState.scrollToPage(realFirstIndex) // 虚拟后置页 -> 瞬跳到真实首页
+                        extendedCount - 1 -> {
+                            Log.d("InfiniteHorizontalPager", " scroll To end")
+                            pagerState.scrollToPage(realFirstIndex)
+                        } // 虚拟后置页 -> 瞬跳到真实首页
                     }
                 }
             }

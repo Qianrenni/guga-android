@@ -249,10 +249,12 @@ fun BookReadView(
                         viewModel.refreshPages(+1, it)
                         Log.d(TAG, "BookReadView: onForward $it")
                     },
+                    initialItemIndex = uiState.currentPageIndex,
                     onBack = {
                         viewModel.refreshPages(-1, it)
                         Log.d(TAG, "BookReadView: onBack $it")
-                    }
+                    },
+                    onPageChanged = { Log.d(TAG, "BookReadView:  pageChanged $it") }
                 ) { page ->
                     Column(
                         modifier = Modifier

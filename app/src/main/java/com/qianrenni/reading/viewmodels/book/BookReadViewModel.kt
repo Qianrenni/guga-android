@@ -42,11 +42,12 @@ data class BookReadUiState(
     val showSettings: Boolean = false,
     val showBottomControls: Boolean = false,
     val currentIndex: Int = -1,
+    val currentPageIndex: Int = 0,
     val isSystemBarsHidden: Boolean = true,
     override val pageStatus: CommonPageStatus = CommonPageStatus()
 ) : CommonUiState
 
-private val TAG = "BookReadViewModel"
+private const val TAG = "BookReadViewModel"
 
 class BookReadViewModel(
     application: Application,
@@ -60,7 +61,7 @@ class BookReadViewModel(
     private val PAGE_SIZE = 3
     private var heartbeatJob: Job? = null
     var currentChapterPageIndex: Int = 0
-    var currentPageIndex = 0
+
     private fun clear() {
         synchronized(lock) {
             chaptersCache.evictAll()
@@ -84,7 +85,8 @@ class BookReadViewModel(
         }
     }
 
-    fun refreshPages(step: Int = 0, currentPage: Int = currentPageIndex) {
+    fun refreshPages(step: Int = 0, currentPage: Int = uiState.value.currentPageIndex) {
+        Log.d(TAG, "refreshPages:  currentPage $currentPage")
         viewModelScope.launch(Dispatchers.Default) {
             val catalog = uiState.value.catalog
             var updateCurrentIndex = uiState.value.currentIndex
@@ -150,12 +152,12 @@ class BookReadViewModel(
                 (currentPage - 1 + PAGE_SIZE) % PAGE_SIZE,
                 (currentPage + 1) % PAGE_SIZE
             )
-            currentPageIndex = currentPage
             _uiState.update { state ->
                 state.copy(
                     pages = pagesOrder.zip(updateItems).sortedBy { it.first }.map { it.second },
                     currentIndex = updateCurrentIndex,
-                    pageStatus = state.pageStatus.down()
+                    pageStatus = state.pageStatus.down(),
+                    currentPageIndex = currentPage
                 )
             }
             Log.d(TAG, "refreshPages: ${uiState.value.pages}")
