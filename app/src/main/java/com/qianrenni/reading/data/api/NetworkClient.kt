@@ -1,5 +1,6 @@
 package com.qianrenni.reading.data.api
 
+import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -16,8 +17,10 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
+
 object NetworkClient {
     private const val BASE_URL = "http://49.235.107.221:8000/" // 请替换为实际的 API 基础 URL
+    const val TAG = "NetworkClient"
     private var token = ""
         set(value) = run {
             field = value
@@ -61,12 +64,17 @@ object NetworkClient {
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.get(getBaseUrl() + urlString) {
-            header("Authorization", "${getTokenType()} ${getToken()}")
-            contentType(ContentType.Application.Json)
-            block()
+        try {
+            val response: HttpResponse = client.get(getBaseUrl() + urlString) {
+                header("Authorization", "${getTokenType()} ${getToken()}")
+                contentType(ContentType.Application.Json)
+                block()
+            }
+            return ResponseHandler.handleResponse<T>(response)
+        } catch (e: Exception) {
+            Log.e(TAG, "get: ${e.message}")
+            return NetworkResult.Failure(message = "网络错误:服务器连接异常", exception = e)
         }
-        return ResponseHandler.handleResponse<T>(response)
     }
 
     /**
@@ -76,12 +84,17 @@ object NetworkClient {
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.post(getBaseUrl() + urlString) {
-            header("Authorization", "${getTokenType()} ${getToken()}")
-            contentType(ContentType.Application.Json)
-            block()
+        try {
+            val response: HttpResponse = client.post(getBaseUrl() + urlString) {
+                header("Authorization", "${getTokenType()} ${getToken()}")
+                contentType(ContentType.Application.Json)
+                block()
+            }
+            return ResponseHandler.handleResponse<T>(response)
+        } catch (e: Exception) {
+            Log.e(TAG, "get: ${e.message}")
+            return NetworkResult.Failure(message = "网络错误:服务器连接异常", exception = e)
         }
-        return ResponseHandler.handleResponse<T>(response)
     }
 
     /**
@@ -91,12 +104,17 @@ object NetworkClient {
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.put(getBaseUrl() + urlString) {
-            header("Authorization", "${getTokenType()} ${getToken()}")
-            contentType(ContentType.Application.Json)
-            block()
+        try {
+            val response: HttpResponse = client.put(getBaseUrl() + urlString) {
+                header("Authorization", "${getTokenType()} ${getToken()}")
+                contentType(ContentType.Application.Json)
+                block()
+            }
+            return ResponseHandler.handleResponse<T>(response)
+        } catch (e: Exception) {
+            Log.e(TAG, "get: ${e.message}")
+            return NetworkResult.Failure(message = "网络错误:服务器连接异常", exception = e)
         }
-        return ResponseHandler.handleResponse<T>(response)
     }
 
     /**
@@ -106,12 +124,17 @@ object NetworkClient {
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.delete(getBaseUrl() + urlString) {
-            header("Authorization", "${getTokenType()} ${getToken()}")
-            contentType(ContentType.Application.Json)
-            block()
+        try {
+            val response: HttpResponse = client.delete(getBaseUrl() + urlString) {
+                header("Authorization", "${getTokenType()} ${getToken()}")
+                contentType(ContentType.Application.Json)
+                block()
+            }
+            return ResponseHandler.handleResponse<T>(response)
+        } catch (e: Exception) {
+            Log.e(TAG, "get: ${e.message}")
+            return NetworkResult.Failure(message = "网络错误:服务器连接异常", exception = e)
         }
-        return ResponseHandler.handleResponse(response)
     }
 
     /**
@@ -121,11 +144,16 @@ object NetworkClient {
         urlString: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): NetworkResult<T> {
-        val response: HttpResponse = client.patch(getBaseUrl() + urlString) {
-            header("Authorization", "${getTokenType()} ${getToken()}")
-            contentType(ContentType.Application.Json)
-            block()
+        try {
+            val response: HttpResponse = client.patch(getBaseUrl() + urlString) {
+                header("Authorization", "${getTokenType()} ${getToken()}")
+                contentType(ContentType.Application.Json)
+                block()
+            }
+            return ResponseHandler.handleResponse<T>(response)
+        } catch (e: Exception) {
+            Log.e(TAG, "get: ${e.message}")
+            return NetworkResult.Failure(message = "网络错误:服务器连接异常", exception = e)
         }
-        return ResponseHandler.handleResponse(response)
     }
 }

@@ -62,7 +62,7 @@ class BookReadViewModel(
     private var heartbeatJob: Job? = null
     var currentChapterPageIndex: Int = 0
 
-    private fun clear() {
+    fun clear() {
         synchronized(lock) {
             chaptersCache.evictAll()
             _uiState.update { it.copy(pages = emptyList()) }
@@ -179,6 +179,7 @@ class BookReadViewModel(
     }
 
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
+        clear()
         val currentState = _uiState.value
         if (currentState.pageStatus.isLoading
             || (currentState.book != null && currentState.book.id == bookId)

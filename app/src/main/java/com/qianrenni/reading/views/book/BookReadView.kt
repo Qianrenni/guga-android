@@ -213,8 +213,9 @@ fun BookReadView(
                 LaunchedEffect(Unit) {
                     viewModel.viewModelScope.launch(Dispatchers.Default) {
                         availableHeight = maxHeight
-                        val height = with(density) { maxHeight.toPx() }
-                        val availableWidth = with(density) { maxWidth.toPx() }
+                        val height = with(density) { maxHeight.toPx() - 12.sp.toPx() }
+                        val availableWidth =
+                            with(density) { maxWidth.toPx() - 16.dp.toPx() }
                         while (true) {
                             val it = viewModel.bookChapterChannel.receive()
                             if (it.chapterId > 0) {
@@ -244,7 +245,10 @@ fun BookReadView(
                     items = uiState.pages,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable { viewModel.toggleSystemBars() },
+                        .clickable(
+                            indication = null,
+                            interactionSource = null,
+                            onClick = { viewModel.toggleSystemBars() }),
                     onForward = {
                         viewModel.refreshPages(+1, it)
                         Log.d(TAG, "BookReadView: onForward $it")
@@ -264,8 +268,11 @@ fun BookReadView(
                         Text(
                             uiState.catalog[uiState.currentIndex].title,
                             modifier = Modifier.fillMaxWidth(),
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                lineHeight = 12.sp
+                            )
                         )
                         ChapterPage(
                             content = page.contents,
