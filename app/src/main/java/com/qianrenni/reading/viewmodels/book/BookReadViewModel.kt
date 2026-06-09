@@ -196,6 +196,9 @@ class BookReadViewModel(
             bookResult.onSuccess { data ->
                 _uiState.update { it.copy(book = data) }
             }
+            bookResult.onFailure { text, code, throwable ->
+                _uiState.update { it.copy(pageStatus = it.pageStatus.error(text)) }
+            }
             catalogResult.onSuccess { data ->
                 val catalogList = data.toList()
                     .mapIndexed { index, it -> it.copy(title = "第${indexToCN(index + 1)}章 ${it.title}") }
@@ -224,6 +227,9 @@ class BookReadViewModel(
                     startHeartbeat(chapterIdToLoad)
                     refreshPages()
                 }
+            }
+            catalogResult.onFailure { text, code, throwable ->
+                _uiState.update { it.copy(pageStatus = it.pageStatus.error(text)) }
             }
         }
     }
@@ -313,7 +319,7 @@ class BookReadViewModel(
             uiState.value.book?.let { book ->
                 ReportService.reportChapterRead(
                     ReadEvent(
-                        book_id = book.id, chapter_id = chapterId, event_type = eventType
+                        bookId = book.id, chapterId = chapterId, eventType = eventType
                     )
                 )
             }

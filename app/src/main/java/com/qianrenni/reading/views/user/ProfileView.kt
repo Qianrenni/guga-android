@@ -57,7 +57,7 @@ fun ProfileView(
 
             // 用户名
             Text(
-                text = user?.username ?: "未知用户",
+                text = user?.userName ?: "未知用户",
                 style = MaterialTheme.typography.titleLarge
             )
 
@@ -78,9 +78,9 @@ fun ProfileView(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = if (user?.is_active == true) "已激活" else "未激活",
+                    text = if (user?.isActive == true) "已激活" else "未激活",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (user?.is_active == true)
+                    color = if (user?.isActive == true)
                         MaterialTheme.colorScheme.primary
                     else
                         MaterialTheme.colorScheme.error

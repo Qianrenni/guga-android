@@ -280,7 +280,8 @@ fun BookReadView(
                             textAlign = TextAlign.Center,
                             style = TextStyle(
                                 fontSize = 12.sp,
-                                lineHeight = 12.sp
+                                lineHeight = 12.sp,
+                                color = Color(readSettings.textColor),
                             )
                         )
                         ChapterPage(

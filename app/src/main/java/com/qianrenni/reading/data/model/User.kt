@@ -5,10 +5,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class User(
     val id: Int,
-    val username: String,
+    val userName: String,
     val email: String,
     val avatar: String = "",
-    val is_active: Boolean,
+    val isActive: Boolean,
     val right: List<Int> = emptyList()
 )
 
@@ -21,21 +21,9 @@ data class LoginRequest(
 
 @Serializable
 data class LoginResponse(
-    val access_token: String,
-    val refresh_token: String,
-    val token_type: String = "Bearer",
-    val user: User
-)
-
-@Serializable
-data class TokenResponse(
-    val access_token: String,
-    val refresh_token: String,
-    val token_type: String = "Bearer"
-)
-
-@Serializable
-data class UserResponse(
+    val accessToken: String,
+    val refreshToken: String,
+    val tokenType: String = "Bearer",
     val user: User
 )
 

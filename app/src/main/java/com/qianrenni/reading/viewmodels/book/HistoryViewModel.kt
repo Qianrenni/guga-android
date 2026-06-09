@@ -40,12 +40,12 @@ class HistoryViewModel : ViewModel() {
             var historyItems: List<BookReadingProgress> = emptyList()
             historyItemsJob.await().onSuccess {
                 historyItems = it
-                val bookIds = historyItems.map { item -> item.book_id }
+                val bookIds = historyItems.map { item -> item.bookId }
                 bookIds
             }?.let { bookIds ->
                 if (bookIds.isNotEmpty()) {
                     val orders =
-                        historyItems.indices.sortedByDescending { historyItems[it].last_read_at }
+                        historyItems.indices.sortedByDescending { historyItems[it].lastReadAt }
                     BookService.getBooksByIds(bookIds).onSuccess { books ->
                         _uiState.update {
                             it.copy(
@@ -57,7 +57,7 @@ class HistoryViewModel : ViewModel() {
             }
             shelfItemsJob.await().onSuccess { shelfItems ->
                 _uiState.update { state ->
-                    state.copy(shelfIds = shelfItems.map { it.book_id }.toSet())
+                    state.copy(shelfIds = shelfItems.map { it.bookId }.toSet())
                 }
             }
             _uiState.update { it.copy(pageStatus = it.pageStatus.down()) }
@@ -67,11 +67,11 @@ class HistoryViewModel : ViewModel() {
     fun deleteHistory(bookId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             val result = ReadingProgressService.deleteReadingProgress(bookId)
-            result.onSuccess {
+            result.onEmpty {
 
                 _uiState.update { state ->
                     state.copy(
-                        historyItems = state.historyItems.filter { it.book_id != bookId },
+                        historyItems = state.historyItems.filter { it.bookId != bookId },
                         books = state.books.filter { it.id != bookId })
                 }
                 SnackBarManager.showMessage("删除成功")
@@ -85,9 +85,8 @@ class HistoryViewModel : ViewModel() {
     fun addToShelf(bookId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             val result =
-                ShelfService.addToShelf(AddShelfRequest(book_id = bookId))
+                ShelfService.addToShelf(AddShelfRequest(bookId = bookId))
             result.onEmpty {
-
                 _uiState.update { state ->
                     state.copy(shelfIds = state.shelfIds + bookId)
                 }

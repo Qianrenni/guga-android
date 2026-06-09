@@ -5,7 +5,7 @@ import com.qianrenni.reading.data.model.EmailVerifyRequest
 import com.qianrenni.reading.data.model.LoginRequest
 import com.qianrenni.reading.data.model.LoginResponse
 import com.qianrenni.reading.data.model.RegisterRequest
-import com.qianrenni.reading.data.model.UserResponse
+import com.qianrenni.reading.data.model.User
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -45,7 +45,7 @@ object AuthService {
         return NetworkClient.post("token/refresh")
     }
 
-    suspend fun getCurrentUser(): NetworkResult<UserResponse> {
+    suspend fun getCurrentUser(): NetworkResult<User> {
         return NetworkClient.get("token/auth/me")
     }
 

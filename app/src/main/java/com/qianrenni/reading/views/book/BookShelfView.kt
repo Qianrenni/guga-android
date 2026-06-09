@@ -68,7 +68,7 @@ fun BookShelfView(
                         navController.navigate("read/$bookId/$chapterId")
                     },
                     onDelete = {
-                        viewModel.removeFromShelf(it.book_id)
+                        viewModel.removeFromShelf(it.bookId)
                     }
                 )
             }
@@ -86,7 +86,7 @@ fun ShelfItemCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick(shelfItem.book_id, shelfItem.last_chapter_id ?: 0) }
+            .clickable { onClick(shelfItem.bookId, shelfItem.lastChapterId ?: 0) }
     ) {
         Row(
             modifier = Modifier
@@ -123,7 +123,7 @@ fun ShelfItemCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                shelfItem.last_read_at?.let {
+                shelfItem.lastReadAt?.let {
                     Text(
                         text = "上次阅读: ${it.split("T")[0]}",
                         style = MaterialTheme.typography.labelSmall,
@@ -131,7 +131,7 @@ fun ShelfItemCard(
                     )
                 }
                 TextButton(
-                    onClick = { onClick(book.id, shelfItem.last_chapter_id ?: 0) },
+                    onClick = { onClick(book.id, shelfItem.lastChapterId ?: 0) },
                     modifier = Modifier.align(Alignment.End)
                 ) {
                     Text("继续阅读")

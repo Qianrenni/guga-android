@@ -44,19 +44,19 @@ class ShelfViewModel : ViewModel() {
             }
             val historyItemsResult = historyItemJob.await()
             historyItemsResult.onSuccess { historyItems ->
-                val historyItemsMap = historyItems.associateBy { it.book_id }
+                val historyItemsMap = historyItems.associateBy { it.bookId }
                 shelfItems = shelfItems.map { shelfItem ->
-                    historyItemsMap[shelfItem.book_id]?.let {
+                    historyItemsMap[shelfItem.bookId]?.let {
                         return@map shelfItem.copy(
-                            last_chapter_id = it.last_chapter_id,
-                            last_position = it.last_position,
-                            last_read_at = it.last_read_at
+                            lastChapterId = it.lastChapterId,
+                            lastPosition = it.lastPosition,
+                            lastReadAt = it.lastReadAt
                         )
                     }
                     return@map shelfItem
                 }
             }
-            shelfItems.map { it.book_id }.let { bookIds ->
+            shelfItems.map { it.bookId }.let { bookIds ->
                 if (bookIds.isNotEmpty()) {
                     BookService.getBooksByIds(bookIds).onSuccess { books ->
                         books.sortBy { it.id }
@@ -64,7 +64,7 @@ class ShelfViewModel : ViewModel() {
                     }
                 }
             }
-            val orders = shelfItems.indices.sortedByDescending { shelfItems[it].last_read_at }
+            val orders = shelfItems.indices.sortedByDescending { shelfItems[it].lastReadAt }
             _uiState.update {
                 it.copy(
                     shelfItems = orders.map { index -> shelfItems[index] },
@@ -84,7 +84,7 @@ class ShelfViewModel : ViewModel() {
                 SnackBarManager.showMessage("删除成功")
                 _uiState.update { state ->
                     state.copy(
-                        shelfItems = state.shelfItems.filter { it.book_id != bookId },
+                        shelfItems = state.shelfItems.filter { it.bookId != bookId },
                         books = state.books.filter { it.id != bookId })
                 }
             }

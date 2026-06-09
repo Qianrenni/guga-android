@@ -67,9 +67,9 @@ class LoginViewModel : ViewModel() {
             result.onSuccess { res ->
                 AuthStore.setUser(res.user)
                 AuthStore.setToken(
-                    res.access_token,
-                    res.refresh_token,
-                    res.token_type,
+                    res.accessToken,
+                    res.refreshToken,
+                    res.tokenType,
                     rememberMe
                 )
                 _loginState.update { it.copy(isLoading = false, error = null) }

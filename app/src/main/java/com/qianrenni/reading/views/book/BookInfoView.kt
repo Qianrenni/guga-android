@@ -17,11 +17,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryTabRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
@@ -38,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.qianrenni.reading.components.BookItem
+import com.qianrenni.reading.components.CommonPage
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.Catalog
 import com.qianrenni.reading.viewmodels.book.BookInfoViewModel
@@ -53,68 +52,59 @@ fun BookInfoView(
     LaunchedEffect(bookId) {
         viewModel.loadBookInfo(bookId)
     }
+    CommonPage(
+        uiState = uiState,
+        Modifier.fillMaxSize(),
+        refresh = { viewModel.loadBookInfo(bookId) })
+    {
+        uiState.book?.let { book ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // 书籍信息卡片
+                item {
+                    BookInfoCard(book = book)
+                }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.isError) {
-            Text(
-                text = uiState.errorMessage,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.error
-            )
-        } else {
-            uiState.book?.let { book ->
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // 书籍信息卡片
-                    item {
-                        BookInfoCard(book = book)
-                    }
+                // Tab 选择器
+                item {
+                    BookInfoTabs(
+                        selectedTabIndex = uiState.selectedTabIndex,
+                        onTabSelected = viewModel::selectTab
+                    )
+                }
 
-                    // Tab 选择器
-                    item {
-                        BookInfoTabs(
-                            selectedTabIndex = uiState.selectedTabIndex,
-                            onTabSelected = viewModel::selectTab
-                        )
-                    }
+                // Tab 内容
+                item {
+                    when (uiState.selectedTabIndex) {
+                        0 -> {
+                            Text(
+                                text = book.description,
+                                modifier = Modifier.padding(4.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
-                    // Tab 内容
-                    item {
-                        when (uiState.selectedTabIndex) {
-                            0 -> {
-                                Text(
-                                    text = book.description,
-                                    modifier = Modifier.padding(4.dp),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            1 -> {
-                                // 目录
-                                CatalogList(
-                                    catalog = uiState.catalog,
-                                    bookId = book.id,
-                                    navController = navController
-                                )
-                            }
+                        1 -> {
+                            // 目录
+                            CatalogList(
+                                catalog = uiState.catalog,
+                                bookId = book.id,
+                                navController = navController
+                            )
                         }
                     }
+                }
 
-                    // 相关推荐
-                    item {
-                        RelatedBooksSection(
-                            relatedBooks = uiState.relatedBooks,
-                            onBookClick = { clickedBook ->
-                                navController.navigate("book/${clickedBook.id}")
-                            }
-                        )
-                    }
+                // 相关推荐
+                item {
+                    RelatedBooksSection(
+                        relatedBooks = uiState.relatedBooks,
+                        onBookClick = { clickedBook ->
+                            navController.navigate("book/${clickedBook.id}")
+                        }
+                    )
                 }
             }
         }
@@ -172,7 +162,7 @@ private fun BookInfoCard(book: Book) {
                     modifier = Modifier.size(18.dp)
                 )
                 Text(
-                    text = book.created_at.split('T').firstOrNull() ?: "",
+                    text = book.createdAt.split('T').firstOrNull() ?: "",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -203,7 +193,7 @@ private fun BookInfoCard(book: Book) {
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "${book.total_chapter} 章节",
+                    text = "${book.totalChapter} 章节",
                     style = MaterialTheme.typography.bodySmall
                 )
             }

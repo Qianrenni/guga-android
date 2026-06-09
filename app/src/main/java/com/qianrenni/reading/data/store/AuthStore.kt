@@ -31,7 +31,7 @@ object AuthStore {
             NetworkClient.setToken(savedAccessToken, savedTokenType)
             run {
                 AuthService.getCurrentUser().onSuccess {
-                    setUser(it.user)
+                    setUser(it)
                     true
                 }
             } ?: run {
@@ -40,7 +40,7 @@ object AuthStore {
                 val result = AuthService.refreshToken()
                 result.onSuccess {
                     setUser(it.user)
-                    saveToken(prefs, it.access_token, it.refresh_token, it.token_type)
+                    saveToken(prefs, it.accessToken, it.refreshToken, it.tokenType)
                 }
                 result.onFailure { _, _, _ ->
                     NetworkClient.setToken("", "")

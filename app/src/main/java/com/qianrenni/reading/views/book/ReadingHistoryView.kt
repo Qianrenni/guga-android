@@ -63,7 +63,7 @@ fun ReadingHistoryView(
                         navController.navigate("read/$bookId/$chapterId")
                     },
                     onDelete = {
-                        viewModel.deleteHistory(it.book_id)
+                        viewModel.deleteHistory(it.bookId)
                     },
                     onAddToShelf = {
                         viewModel.addToShelf(it.id)
@@ -87,7 +87,7 @@ fun HistoryItemCard(
         modifier = Modifier
             .height(120.dp)
             .fillMaxWidth()
-            .clickable(onClick = { onClick(book.id, historyItem.last_chapter_id) }),
+            .clickable(onClick = { onClick(book.id, historyItem.lastChapterId) }),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Image(
@@ -119,7 +119,7 @@ fun HistoryItemCard(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "上次阅读: ${historyItem.last_read_at.split("T")[0]}",
+                text = "上次阅读: ${historyItem.lastReadAt.split("T")[0]}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -127,7 +127,7 @@ fun HistoryItemCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.align(Alignment.End)
             ) {
-                TextButton(onClick = { onClick(book.id, historyItem.last_chapter_id) }) {
+                TextButton(onClick = { onClick(book.id, historyItem.lastChapterId) }) {
                     Text("继续阅读")
                 }
                 if (!isInShelf) {
