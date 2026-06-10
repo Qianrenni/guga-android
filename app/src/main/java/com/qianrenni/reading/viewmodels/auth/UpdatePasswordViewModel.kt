@@ -7,6 +7,7 @@ import com.qianrenni.reading.common.CommonUiState
 import com.qianrenni.reading.data.api.UserService
 import com.qianrenni.reading.data.model.UpdatePasswordRequest
 import com.qianrenni.reading.data.store.AuthStore
+import com.qianrenni.reading.util.SnackBarManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,7 +57,7 @@ class UpdatePasswordViewModel : ViewModel() {
         }
     }
 
-    fun updatePassword(onSuccess: () -> Unit = {}) {
+    fun updatePassword() {
         val state = updatePasswordState.value
 
         // 表单验证
@@ -93,7 +94,7 @@ class UpdatePasswordViewModel : ViewModel() {
             result.onEmpty {
                 // 清除用户状态
                 AuthStore.clear()
-                onSuccess()
+                SnackBarManager.showMessage("密码修改成功，请重新登录")
             }
             result.onFailure { message, _, _ ->
                 _updatePasswordState.update { it.copy(pageStatus = it.pageStatus.error(message)) }

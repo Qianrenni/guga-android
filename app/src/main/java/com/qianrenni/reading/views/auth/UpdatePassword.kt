@@ -29,7 +29,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.UpdatePasswordViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun UpdatePasswordView(
@@ -111,15 +110,7 @@ fun UpdatePasswordView(
 
             Button(
                 onClick = {
-                    viewModel.updatePassword(
-                        onSuccess = {
-                            scope.launch { SnackBarManager.showMessage("密码修改成功，请重新登录") }
-
-                            navController.navigate("login") {
-                                popUpTo("update-password") { inclusive = true }
-                            }
-                        },
-                    )
+                    viewModel.updatePassword()
                 },
                 enabled = !updatePasswordState.pageStatus.isLoading,
                 modifier = Modifier.width(180.dp)

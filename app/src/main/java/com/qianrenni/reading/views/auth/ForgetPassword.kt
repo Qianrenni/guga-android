@@ -30,7 +30,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.ForgetPasswordViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun ForgetPasswordView(
@@ -74,11 +73,7 @@ fun ForgetPasswordView(
                 )
                 Button(
                     onClick = {
-                        viewModel.sendVerificationCode(
-                            onSuccess = {
-                                scope.launch { SnackBarManager.showMessage("验证码已发送到邮箱") }
-                            }
-                        )
+                        viewModel.sendVerificationCode()
                     },
                     enabled = !forgetPasswordState.isSendingCode,
                 ) {
@@ -133,14 +128,7 @@ fun ForgetPasswordView(
 
             Button(
                 onClick = {
-                    viewModel.resetPassword(
-                        onSuccess = {
-                            scope.launch { SnackBarManager.showMessage("密码重置成功，请登录") }
-                            navController.navigate("login") {
-                                popUpTo("forget-password") { inclusive = true }
-                            }
-                        }
-                    )
+                    viewModel.resetPassword()
                 },
                 enabled = !forgetPasswordState.pageStatus.isLoading,
             ) {

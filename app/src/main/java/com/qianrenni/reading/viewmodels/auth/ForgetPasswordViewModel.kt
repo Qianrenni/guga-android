@@ -6,6 +6,7 @@ import com.qianrenni.reading.common.CommonPageStatus
 import com.qianrenni.reading.common.CommonUiState
 import com.qianrenni.reading.data.api.UserService
 import com.qianrenni.reading.data.model.ForgotPasswordRequest
+import com.qianrenni.reading.util.SnackBarManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,7 +57,7 @@ class ForgetPasswordViewModel : ViewModel() {
         }
     }
 
-    fun sendVerificationCode(onSuccess: () -> Unit = {}) {
+    fun sendVerificationCode() {
         val email = forgetPasswordState.value.email
 
         if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
@@ -76,7 +77,7 @@ class ForgetPasswordViewModel : ViewModel() {
             _forgetPasswordState.update { it.copy(isSendingCode = false) }
 
             result.onEmpty {
-                onSuccess()
+                SnackBarManager.showMessage("验证码已发送到邮箱")
             }
             result.onFailure { message, _, _ ->
                 _forgetPasswordState.update { it.copy(pageStatus = it.pageStatus.error(message)) }
@@ -84,7 +85,7 @@ class ForgetPasswordViewModel : ViewModel() {
         }
     }
 
-    fun resetPassword(onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+    fun resetPassword() {
         val state = forgetPasswordState.value
 
         // 表单验证
@@ -102,7 +103,6 @@ class ForgetPasswordViewModel : ViewModel() {
 
         if (state.password != state.confirmPassword) {
             _forgetPasswordState.update { it.copy(pageStatus = it.pageStatus.error("两次输入密码不一致")) }
-            onError("两次输入的密码不一致")
             return
         }
 
@@ -120,7 +120,7 @@ class ForgetPasswordViewModel : ViewModel() {
             _forgetPasswordState.update { it.copy(pageStatus = it.pageStatus.down()) }
 
             result.onEmpty {
-                onSuccess()
+                SnackBarManager.showMessage("密码重置成功，请登录")
             }
             result.onFailure { message, _, _ ->
                 _forgetPasswordState.update { it.copy(pageStatus = it.pageStatus.error(message)) }
