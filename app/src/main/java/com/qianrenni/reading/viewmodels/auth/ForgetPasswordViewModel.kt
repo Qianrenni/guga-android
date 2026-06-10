@@ -111,8 +111,8 @@ class ForgetPasswordViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val result = UserService.resetPassword(
                 ForgotPasswordRequest(
-                    user_account = state.email,
-                    verify_code = state.captcha,
+                    userAccount = state.email,
+                    verifyCode = state.captcha,
                     password = state.password
                 )
             )

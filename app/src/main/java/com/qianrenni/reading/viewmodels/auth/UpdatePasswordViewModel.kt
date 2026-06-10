@@ -82,9 +82,9 @@ class UpdatePasswordViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val result = UserService.updatePassword(
                 UpdatePasswordRequest(
-                    username = state.email,
-                    old_password = state.oldPassword,
-                    new_password = state.newPassword
+                    userName = state.email,
+                    oldPassword = state.oldPassword,
+                    newPassword = state.newPassword
                 )
             )
 

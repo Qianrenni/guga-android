@@ -29,7 +29,7 @@ data class LoginResponse(
 
 @Serializable
 data class UserRegister(
-    val username: String,
+    val userName: String,
     val password: String,
     val email: String,
     val avatar: String = ""
@@ -48,14 +48,14 @@ data class EmailVerifyRequest(
 
 @Serializable
 data class UpdatePasswordRequest(
-    val username: String,
-    val old_password: String,
-    val new_password: String
+    val userName: String,
+    val oldPassword: String,
+    val newPassword: String
 )
 
 @Serializable
 data class ForgotPasswordRequest(
-    val user_account: String,
-    val verify_code: String,
+    val userAccount: String,
+    val verifyCode: String,
     val password: String
 )

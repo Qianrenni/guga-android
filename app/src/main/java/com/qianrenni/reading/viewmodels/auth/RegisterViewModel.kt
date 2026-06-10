@@ -103,7 +103,7 @@ class RegisterViewModel : ViewModel() {
             val result = AuthService.register(
                 request = RegisterRequest(
                     user = UserRegister(
-                        username = state.username,
+                        userName = state.username,
                         password = state.password,
                         email = state.email
                     ),
