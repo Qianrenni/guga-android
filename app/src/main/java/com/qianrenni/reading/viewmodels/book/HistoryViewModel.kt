@@ -39,7 +39,7 @@ class HistoryViewModel : ViewModel() {
             val shelfItemsJob = async { ShelfService.getShelf() }
             var historyItems: List<BookReadingProgress> = emptyList()
             historyItemsJob.await().onSuccess {
-                historyItems = it
+                historyItems = it.sortedBy { item -> item.bookId }
                 val bookIds = historyItems.map { item -> item.bookId }
                 bookIds
             }?.let { bookIds ->
@@ -47,9 +47,10 @@ class HistoryViewModel : ViewModel() {
                     val orders =
                         historyItems.indices.sortedByDescending { historyItems[it].lastReadAt }
                     BookService.getBooksByIds(bookIds).onSuccess { books ->
+                        val orderBooks = books.sortedBy { it.id }
                         _uiState.update {
                             it.copy(
-                                books = orders.map { index -> books[index] },
+                                books = orders.map { index -> orderBooks[index] },
                                 historyItems = orders.map { index -> historyItems[index] })
                         }
                     }
