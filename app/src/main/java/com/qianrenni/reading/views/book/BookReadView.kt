@@ -89,7 +89,7 @@ suspend fun measureText(
         val newPages = mutableListOf<List<String>>()
         var startIndex = 0
         val totalLength = content.length
-        val paddingPx = with(density) { readSettings.fontSize.dp.toPx() }
+        val paddingPx = with(density) { (2 * readSettings.fontSize).dp.toPx() }
         val tempIsIndent = MutableList(1) { true }
         while (startIndex < totalLength) {
             // 初始猜测：从当前索引开始，向后移动约一页的字符数
@@ -209,6 +209,9 @@ fun BookReadView(
     var availableHeight by remember { mutableStateOf(0.dp) }
     CommonPage(
         uiState = uiState,
+        refresh = {
+            viewModel.loadBookAndCatalog(bookId, chapterId)
+        }
     ) {
         Box(
             modifier = Modifier
@@ -398,7 +401,7 @@ private fun ChapterPage(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(settings.fontSize.dp)
+        verticalArrangement = Arrangement.spacedBy((2 * settings.fontSize).dp)
     ) {
         content.forEachIndexed { index, paragraph ->
             Text(
