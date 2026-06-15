@@ -50,7 +50,7 @@ fun BookShelfView(
     LaunchedEffect(Unit) {
         viewModel.loadShelf()
     }
-    CommonPage(uiState, refresh = { viewModel.loadShelf() }) {
+    CommonPage(uiState, refresh = { viewModel.loadShelf() }, navController = navController) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()

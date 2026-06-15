@@ -182,6 +182,8 @@ class BookReadViewModel(
     }
 
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
+        require(bookId > 0)
+        require(initialChapterId > 0)
         clear()
         val currentState = _uiState.value
         if (currentState.pageStatus.isLoading) {

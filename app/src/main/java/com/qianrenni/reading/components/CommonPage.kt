@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import com.qianrenni.reading.common.CommonUiState
 
 
@@ -20,6 +21,7 @@ fun CommonPage(
     uiState: CommonUiState,
     modifier: Modifier = Modifier,
     refresh: () -> Unit = {},
+    navController: NavController? = null,
     content: @Composable () -> Unit
 ) {
     Surface(
@@ -42,6 +44,11 @@ fun CommonPage(
                 )
                 Button(onClick = refresh) {
                     Text("重试")
+                }
+                Button(onClick = {
+                    navController?.popBackStack()
+                }) {
+                    Text("返回")
                 }
             }
         } else {

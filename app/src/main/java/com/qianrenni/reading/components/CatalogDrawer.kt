@@ -74,21 +74,29 @@ fun CatalogDrawer(
         ) {
             items(sortedCatalog, key = { it.id }) { item ->
                 val isSelected = item.id == currentChapterId
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .background(
-                            if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface
-                        )
-                        .fillMaxWidth()
-                        .clickable {
-                            onChapterSelected(item.id)
-                            onDismiss()
-                        },
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface
+                            )
+                            .fillMaxWidth()
+                            .clickable {
+                                onChapterSelected(item.id)
+                                onDismiss()
+                            },
+                    )
+                    Text(
+                        text = "更新时间：${item.createdAt.replace("T", " ").replace("Z", " ")}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
         }
     }

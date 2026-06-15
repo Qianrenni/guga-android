@@ -211,7 +211,8 @@ fun BookReadView(
         uiState = uiState,
         refresh = {
             viewModel.loadBookAndCatalog(bookId, chapterId)
-        }
+        },
+        navController = navController
     ) {
         Box(
             modifier = Modifier

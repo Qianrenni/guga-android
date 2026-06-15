@@ -54,8 +54,9 @@ fun BookInfoView(
     }
     CommonPage(
         uiState = uiState,
-        Modifier.fillMaxSize(),
-        refresh = { viewModel.loadBookInfo(bookId) })
+        refresh = { viewModel.loadBookInfo(bookId) },
+        navController = navController
+    )
     {
         uiState.book?.let { book ->
             LazyColumn(

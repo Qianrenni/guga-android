@@ -22,5 +22,6 @@ data class Catalog(
     val id: Int,
     val title: String,
     val wordsCount: Int = 0,
-    val order: Double = 0.0
+    val order: Double = 0.0,
+    val createdAt: String = ""
 )

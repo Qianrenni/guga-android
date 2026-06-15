@@ -143,9 +143,11 @@ fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) 
             composable(
                 route = "read/{bookId}/{chapterId}"
             ) { backStackEntry ->
-                val bookId = backStackEntry.arguments?.getString("bookId")?.toIntOrNull() ?: 0
+                val bookId = backStackEntry.arguments?.getString("bookId")?.toIntOrNull()
                 val chapterId =
-                    backStackEntry.arguments?.getString("chapterId")?.toIntOrNull() ?: -1
+                    backStackEntry.arguments?.getString("chapterId")?.toIntOrNull()
+                check(bookId != null)
+                check(chapterId != null)
                 BookReadView(
                     context = context,
                     navController = navController,

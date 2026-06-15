@@ -47,7 +47,11 @@ fun ReadingHistoryView(
     LaunchedEffect(Unit) {
         viewModel.loadHistory()
     }
-    CommonPage(uiState = uiState, refresh = { viewModel.loadHistory() }) {
+    CommonPage(
+        uiState = uiState,
+        refresh = { viewModel.loadHistory() },
+        navController = navController
+    ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
