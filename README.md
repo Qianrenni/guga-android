@@ -1,86 +1,92 @@
-# Reading - Android 客户端
+# GUGA Reading - Android Client
 
 [![License](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE)
-[![Kotlin](https://img.shields.io/badge/kotlin-2.0+-purple.svg)](https://kotlinlang.org/)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.2.10-purple.svg)](https://kotlinlang.org/)
 [![Android](https://img.shields.io/badge/android-24+-brightgreen.svg)](https://developer.android.com/)
-[![Compose](https://img.shields.io/badge/jetpack_compose-latest-teal.svg)](https://developer.android.com/jetpack/compose)
+[![Compose](https://img.shields.io/badge/jetpack_compose-BOM_2026.02.01-teal.svg)](https://developer.android.com/jetpack/compose)
 
-GUGA Reading 的 **Android 原生客户端**，基于 Kotlin 和 Jetpack Compose 构建，提供流畅的移动阅读体验。
+[中文版](./README.zh-CN.md)
 
-## 📱 应用概述
+The **Android Native Client** for GUGA Reading, built with Kotlin and Jetpack Compose, delivering a
+smooth mobile reading experience.
 
-Reading Android 是 GUGA Reading 在线阅读平台的移动端应用，为用户提供便捷的书籍阅读、收藏和管理功能。应用采用现代化的 Android 开发技术栈，支持离线阅读、多设备同步等特性。
+## 📱 App Overview
 
-### ✨ 核心特性
+Reading Android is the mobile application for the GUGA Reading online platform, providing users with
+convenient book reading, bookmarking, and management features. Built with a modern Android
+development stack, the app supports category browsing, search, reading progress synchronization, and
+more.
 
-- **📖 优质阅读体验**: 流畅的翻页动画、自定义字体和主题
-- **🌙 夜间模式**: 护眼的深色主题支持
-- **💾 离线阅读**: 缓存章节内容，无网络也能阅读
-- **🔄 进度同步**: 与 Web 端实时同步阅读进度
-- **🔍 智能搜索**: 快速查找书籍和章节
-- **📚 书架管理**: 个性化书架，追更提醒
-- **💬 互动功能**: 评论、点赞、收藏
-- **⚡ 高性能**: Jetpack Compose 声明式 UI，流畅动画
+### ✨ Core Features
 
-## 🏗️ 技术架构
+- **📖 Quality Reading Experience**: Smooth page turning animations, customizable font sizes and
+  themes
+- **🌙 Night Mode**: Eye-friendly dark theme support
+- **🔄 Progress Sync**: Real-time reading progress synchronization with the backend
+- **🔍 Book Search**: Quick search for books across categories
+- **📚 Bookshelf Management**: Personalized bookshelf with favorites management
+- **⚡ High Performance**: Jetpack Compose declarative UI with smooth animations
+
+## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────┐
-│        Android App (Kotlin)          │
-├──────────────────────────────────────┤
-│  UI Layer (Jetpack Compose)          │
-│  ┌──────────┐ ┌──────────┐          │
-│  │  Views   │ │Components│          │
-│  └──────────┘ └──────────┘          │
-├──────────────────────────────────────┤
-│  ViewModel Layer                     │
-│  ┌──────────────────────────┐       │
-│  │   State Management       │       │
-│  └──────────────────────────┘       │
-├──────────────────────────────────────┤
-│  Data Layer                          │
-│  ┌──────────┐ ┌──────────┐          │
-│  │  Ktor    │ │DataStore │          │
-│  │ Client   │ │ (Local)  │          │
-│  └──────────┘ └──────────┘          │
-├──────────────────────────────────────┤
-│         Network (HTTPS)              │
-└──────────────┬───────────────────────┘
-               │
-               ▼
-    ┌─────────────────────┐
-    │   Backend API       │
-    │   (FastAPI)         │
-    └─────────────────────┘
+┌─────────────────────────────────────────┐
+│         Android App (Kotlin)            │
+├─────────────────────────────────────────┤
+│   UI Layer (Jetpack Compose + Material3)│
+│  ┌──────────┐  ┌───────────────────┐    │
+│  │  Views   │  │   Components      │    │
+│  └──────────┘  └───────────────────┘    │
+├─────────────────────────────────────────┤
+│   ViewModel Layer                       │
+│  ┌─────────────────────────────────┐    │
+│  │   StateFlow + ViewModelScope    │    │
+│  └─────────────────────────────────┘    │
+├─────────────────────────────────────────┤
+│   Data Layer                            │
+│  ┌──────────┐ ┌──────────┐ ┌────────┐  │
+│  │  Ktor    │ │DataStore │ │Security│  │
+│  │ Client   │ │Preferences│ │ Crypto │  │
+│  └──────────┘ └──────────┘ └────────┘  │
+├─────────────────────────────────────────┤
+│          Network (HTTP/HTTPS)           │
+└──────────────────┬──────────────────────┘
+                   │
+                   ▼
+        ┌─────────────────────┐
+        │   Backend API       │
+        └─────────────────────┘
 ```
 
-### 架构说明
+### Architecture Notes
 
-- **UI Layer**: 使用 Jetpack Compose 构建声明式 UI
-- **ViewModel Layer**: 管理 UI 状态和业务逻辑
-- **Data Layer**: 网络请求（Ktor）和本地存储（DataStore）
-- **Navigation**: Navigation Compose 实现页面路由
+- **UI Layer**: Built with Jetpack Compose + Material3 for declarative UI
+- **ViewModel Layer**: Uses StateFlow for UI state management and viewModelScope for coroutine
+  lifecycle
+- **Data Layer**: Network requests (Ktor Client), local storage (DataStore Preferences), and
+  encryption (Security Crypto)
+- **Navigation**: Navigation Compose for page routing with bottom navigation bar and parameter
+  passing
 
-## 🛠️ 技术栈
+## 🛠️ Tech Stack
 
-| 技术 | 版本 | 说明 |
-|------|------|------|
-| **语言** | Kotlin | 现代 Android 开发语言 |
-| **最低 SDK** | API 24 (Android 7.0) | 兼容大多数设备 |
-| **目标 SDK** | API 36 (Android 15) | 最新 Android 特性 |
-| **UI 框架** | Jetpack Compose | 声明式 UI  toolkit |
-| **Material Design** | Material3 | 现代化设计系统 |
-| **网络** | Ktor Client | 轻量级 HTTP 客户端 |
-| **序列化** | kotlinx.serialization | JSON 序列化 |
-| **图片加载** | Coil 2.6.0 | 高效的图片加载库 |
-| **导航** | Navigation Compose 2.9.8 | 页面导航 |
-| **本地存储** | DataStore Preferences | 类型安全的键值存储 |
-| **安全存储** | Security Crypto | 加密敏感数据 |
-| **异步** | Kotlin Coroutines | 协程支持 |
-| **依赖注入** | Hilt (可选) | 依赖注入框架 |
-| **构建工具** | Gradle Kotlin DSL | 类型安全的构建配置 |
+| Technology          | Version                          | Description                         |
+|---------------------|----------------------------------|-------------------------------------|
+| **Language**        | Kotlin 2.2.10                    | Modern Android development language |
+| **Min SDK**         | API 24 (Android 7.0)             | Compatible with most devices        |
+| **Target SDK**      | API 36 (Android 15)              | Latest Android features             |
+| **UI Framework**    | Jetpack Compose (BOM 2026.02.01) | Declarative UI toolkit              |
+| **Material Design** | Material3                        | Modern design system                |
+| **Networking**      | Ktor Client 3.5.0                | Lightweight HTTP client             |
+| **Serialization**   | kotlinx.serialization 1.6.2      | JSON serialization                  |
+| **Image Loading**   | Coil 2.7.0                       | Efficient image loading library     |
+| **Navigation**      | Navigation Compose 2.9.8         | Page navigation                     |
+| **Local Storage**   | DataStore Preferences 1.0.0      | Type-safe key-value storage         |
+| **Secure Storage**  | Security Crypto 1.1.0-alpha06    | Encrypted sensitive data            |
+| **Async**           | Kotlin Coroutines 1.11.0         | Coroutine support                   |
+| **Build Tools**     | Gradle Kotlin DSL + AGP 9.2.1    | Type-safe build configuration       |
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 reading/
@@ -88,67 +94,133 @@ reading/
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/qianrenni/reading/
-│   │   │   │   ├── MainActivity.kt          # 主 Activity
-│   │   │   │   ├── Router.kt                # 路由配置
-│   │   │   │   ├── common/                  # 通用组件
-│   │   │   │   ├── components/              # UI 组件
-│   │   │   │   ├── data/                    # 数据层
-│   │   │   │   │   ├── api/                 # API 接口
-│   │   │   │   │   ├── model/               # 数据模型
-│   │   │   │   │   └── repository/          # 数据仓库
-│   │   │   │   ├── ui/                      # UI 主题
-│   │   │   │   ├── util/                    # 工具类
-│   │   │   │   ├── viewmodels/              # ViewModel
-│   │   │   │   └── views/                   # 页面视图
-│   │   │   ├── res/                         # 资源文件
-│   │   │   └── AndroidManifest.xml          # 应用清单
-│   │   ├── test/                            # 单元测试
-│   │   └── androidTest/                     # 仪器化测试
-│   └── build.gradle.kts                     # 模块构建配置
+│   │   │   │   ├── MainActivity.kt              # Main Activity
+│   │   │   │   ├── Router.kt                    # Route configuration
+│   │   │   │   ├── common/                      # Common utilities
+│   │   │   │   │   └── uiState.kt               # Base UI state
+│   │   │   │   ├── components/                  # Reusable UI components
+│   │   │   │   │   ├── BookItem.kt              # Book card component
+│   │   │   │   │   ├── BottomControlBar.kt      # Reading bottom control bar
+│   │   │   │   │   ├── BottomNavigationBar.kt   # Bottom navigation bar
+│   │   │   │   │   ├── CaptchaImage.kt          # CAPTCHA image component
+│   │   │   │   │   ├── CatalogDrawer.kt         # Chapter catalog drawer
+│   │   │   │   │   ├── CommonPage.kt            # Common page layout
+│   │   │   │   │   ├── InfinitePager.kt         # Infinite pager component
+│   │   │   │   │   └── ReadingSettingsDialog.kt # Reading settings dialog
+│   │   │   │   ├── data/                        # Data layer
+│   │   │   │   │   ├── api/                     # API interfaces
+│   │   │   │   │   │   ├── AuthService.kt       # Authentication API
+│   │   │   │   │   │   ├── BookService.kt       # Book API
+│   │   │   │   │   │   ├── NetworkClient.kt     # HTTP client (includes BASE_URL)
+│   │   │   │   │   │   ├── ReadingProgressService.kt # Reading progress API
+│   │   │   │   │   │   ├── ReportService.kt     # Report API
+│   │   │   │   │   │   ├── ResponseHandler.kt   # Response handler
+│   │   │   │   │   │   ├── ShelfService.kt      # Bookshelf API
+│   │   │   │   │   │   └── UserService.kt       # User API
+│   │   │   │   │   ├── model/                   # Data models
+│   │   │   │   │   │   ├── ApiResponse.kt       # Generic API response
+│   │   │   │   │   │   ├── Book.kt              # Book model
+│   │   │   │   │   │   ├── ReadSetting.kt       # Reading settings model
+│   │   │   │   │   │   ├── ReadingProgress.kt   # Reading progress model
+│   │   │   │   │   │   └── User.kt              # User model
+│   │   │   │   │   └── store/                   # Local persistence
+│   │   │   │   │       ├── AuthStore.kt         # Auth state local storage
+│   │   │   │   │       └── SettingRepository.kt # User settings storage
+│   │   │   │   ├── ui/theme/                    # Theme system
+│   │   │   │   │   ├── Theme.kt                 # Light/Dark theme definition
+│   │   │   │   │   └── Type.kt                  # Typography styles
+│   │   │   │   ├── util/                        # Utility classes
+│   │   │   │   │   ├── SnackBarManager.kt       # SnackBar message manager
+│   │   │   │   │   ├── SystemBarUtils.kt        # System bar utility
+│   │   │   │   │   └── tool.kt                  # General utility functions
+│   │   │   │   ├── viewmodels/                  # ViewModel layer
+│   │   │   │   │   ├── auth/                    # Auth ViewModels
+│   │   │   │   │   │   ├── AuthViewModel.kt     # Auth state management
+│   │   │   │   │   │   ├── LoginViewModel.kt    # Login logic
+│   │   │   │   │   │   ├── RegisterViewModel.kt # Registration logic
+│   │   │   │   │   │   ├── ForgetPasswordViewModel.kt # Password reset logic
+│   │   │   │   │   │   └── UpdatePasswordViewModel.kt  # Password change logic
+│   │   │   │   │   └── book/                    # Book ViewModels
+│   │   │   │   │       ├── BookInfoViewModel.kt # Book detail logic
+│   │   │   │   │       ├── BookReadViewModel.kt # Reading logic
+│   │   │   │   │       ├── HistoryViewModel.kt  # Reading history
+│   │   │   │   │       ├── HomeViewModel.kt     # Home/Bookstore logic
+│   │   │   │   │       └── ShelfViewModel.kt    # Bookshelf management
+│   │   │   │   └── views/                       # Screen views
+│   │   │   │       ├── HomeView.kt              # Home (Bookstore)
+│   │   │   │       ├── auth/                    # Auth screens
+│   │   │   │       │   ├── Login.kt             # Login screen
+│   │   │   │       │   ├── Register.kt          # Registration screen
+│   │   │   │       │   ├── ForgetPassword.kt    # Password reset screen
+│   │   │   │       │   └── UpdatePassword.kt    # Password change screen
+│   │   │   │       ├── book/                    # Book screens
+│   │   │   │       │   ├── BookInfoView.kt      # Book detail screen
+│   │   │   │       │   ├── BookReadView.kt      # Reading screen
+│   │   │   │       │   ├── BookShelfView.kt     # Bookshelf screen
+│   │   │   │       │   └── ReadingHistoryView.kt # Reading history screen
+│   │   │   │       └── user/                    # User screens
+│   │   │   │           └── ProfileView.kt       # Profile screen
+│   │   │   ├── res/                             # Resources
+│   │   │   │   ├── drawable/                    # Drawable resources
+│   │   │   │   ├── values/                      # Strings, colors, themes
+│   │   │   │   ├── xml/                         # XML configuration files
+│   │   │   │   └── mipmap-*/                    # App icons
+│   │   │   └── AndroidManifest.xml              # App manifest
+│   │   ├── test/                                # Unit tests
+│   │   └── androidTest/                         # Instrumented tests
+│   ├── build.gradle.kts                         # Module build configuration
+│   └── proguard-rules.pro                       # ProGuard/R8 rules
 ├── gradle/
-│   └── libs.versions.toml                   # 依赖版本管理
-├── build.gradle.kts                         # 项目构建配置
-├── settings.gradle.kts                      # 项目设置
-├── local.properties                         # 本地配置（签名等）
-└── README.md                                # 项目说明
+│   ├── wrapper/                                 # Gradle Wrapper
+│   └── libs.versions.toml                       # Version catalog
+├── build.gradle.kts                             # Project-level build config
+├── settings.gradle.kts                          # Project settings
+├── gradle.properties                            # Gradle properties
+├── local.properties                             # Local config (keystore, etc., not committed)
+├── gradlew                                      # Gradle Wrapper (Unix)
+├── gradlew.bat                                  # Gradle Wrapper (Windows)
+└── README.md                                    # Project README (English)
 ```
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Prerequisites
 
-- **Android Studio**: Hedgehog (2023.1.1) 或更高版本
-- **JDK**: 11 或更高版本
-- **Android SDK**: 
-  - Compile SDK: 36
-  - Min SDK: 24
-  - Target SDK: 36
+- **Android Studio**: Hedgehog (2023.1.1) or later
+- **JDK**: 11 or higher
+- **Android SDK**:
+    - Compile SDK: 36
+    - Min SDK: 24
+    - Target SDK: 36
 - **Gradle**: 8.0+
-- **Kotlin**: 2.0+
+- **Kotlin**: 2.2.10+
 
-### 安装步骤
+### Installation
 
-#### 1. 克隆项目
+#### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd reading
 ```
 
-#### 2. 配置后端 API 地址
+#### 2. Configure Backend API URL
 
-在项目中找到网络配置文件（通常在 `data/api` 目录），修改后端 API 基础 URL：
+Modify the backend API base URL
+in [NetworkClient.kt](app/src/main/java/com/qianrenni/reading/data/api/NetworkClient.kt):
 
 ```kotlin
-// 示例：ApiConfig.kt
-object ApiConfig {
-    const val BASE_URL = "http://your-backend-server:8000"
+// NetworkClient.kt
+object NetworkClient {
+    private const val BASE_URL =
+        "http://49.235.107.221:8000/" // Replace with your actual API base URL
+    // ...
 }
 ```
 
-#### 3. 配置签名（可选，用于发布版本）
+#### 3. Configure Signing (Optional, for Release Builds)
 
-在 `local.properties` 文件中添加签名配置：
+Add signing configuration in the `local.properties` file:
 
 ```properties
 storeFile=/path/to/your/keystore.jks
@@ -157,23 +229,25 @@ keyAlias=your_key_alias
 keyPassword=your_key_password
 ```
 
-> ⚠️ **注意**: `local.properties` 已加入 `.gitignore`，不会提交到版本控制系统。
+> ⚠️ **Note**: `local.properties` is listed in `.gitignore` and will not be committed to version
+> control.
 
-#### 4. 使用 Android Studio 打开项目
+#### 4. Open in Android Studio
 
-1. 打开 Android Studio
-2. 选择 **File** → **Open**
-3. 选择 `reading` 目录
-4. 等待 Gradle 同步完成（首次可能需要几分钟下载依赖）
+1. Launch Android Studio
+2. Select **File** → **Open**
+3. Choose the `reading` directory
+4. Wait for Gradle sync to complete (first sync may take several minutes to download dependencies)
 
-#### 5. 运行应用
+#### 5. Run the App
 
-**方法一：通过 Android Studio**
-- 连接 Android 设备或启动模拟器
-- 点击工具栏的 **Run** 按钮（绿色三角形）
-- 或按快捷键 `Shift + F10`
+**Via Android Studio:**
 
-**方法二：命令行构建**
+- Connect an Android device or start an emulator
+- Click the **Run** button (green triangle) in the toolbar
+- Or press `Shift + F10` (Windows/Linux)
+
+**Via Command Line:**
 
 ```bash
 # macOS/Linux
@@ -183,297 +257,303 @@ keyPassword=your_key_password
 gradlew.bat assembleDebug
 ```
 
-APK 文件位置：`app/build/outputs/apk/debug/app-debug.apk`
+APK location: `app/build/outputs/apk/debug/app-debug.apk`
 
-#### 6. 安装到设备
+#### 6. Install on Device
 
 ```bash
-# 安装调试版本
+# Install debug build
 ./gradlew installDebug
 
-# 或直接使用 adb
+# Or directly via adb
 adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## 📖 主要功能
+## 📖 Main Features
 
-### 1. 用户认证
+### 1. User Authentication
 
-- 手机号/邮箱注册和登录
-- JWT Token 自动管理
-- 个人资料编辑
-- 密码重置
+- Registration (with CAPTCHA support)
+- Login (with CAPTCHA, JWT Token auto-management)
+- Password reset (forgot password flow)
+- Password change
 
-### 2. 书籍浏览
+### 2. Book Browsing (Bookstore)
 
-- 分类浏览
-- 标签筛选
-- 全文搜索
-- 热门推荐
-- 新书上架
+- Category browsing (multi-category switching)
+- Full-text search (debounce support, search results)
+- Popular recommendations
+- New arrivals
+- Paginated loading (infinite scroll)
 
-### 3. 阅读体验
+### 3. Reading Experience
 
-- 章节列表展示
-- 流畅的翻页/滑动阅读
-- 字体大小调节
-- 背景主题切换（白天/夜间）
-- 阅读进度自动保存
-- 断点续读
+- Chapter list display
+- Smooth page turning / swipe reading (InfinitePager component)
+- Font size adjustment
+- Background theme switching (light/dark mode)
+- Auto-save and sync of reading progress
+- Resume reading from last position
+- Chapter navigation (side drawer catalog)
 
-### 4. 书架管理
+### 4. Bookshelf Management
 
-- 添加/移除收藏
-- 追更提醒
-- 阅读统计
-- 最近阅读
+- Add / remove favorites
+- Favorites list display
+- Reading history records
+- Recently read books
 
-### 5. 互动功能
+### 5. User Profile
 
-- 章节评论
-- 点赞支持
-- 分享书籍
+- User info display
+- Profile editing
 
-### 6. 离线支持
+### 6. Interactive Features (Planned)
 
-- 章节内容缓存
-- 离线阅读模式
-- 缓存管理
+- Chapter comments — Planned
+- Likes — Planned
+- Book sharing — Planned
 
-## 🔧 开发指南
+### 7. Offline Support (Planned)
 
-### 构建变体
+- Chapter content caching — Planned
+- Offline reading mode — Planned
+- Cache management — Planned
 
-项目支持以下构建变体：
+## 🔧 Development Guide
 
-- **debug**: 调试版本，启用日志和调试工具
-- **release**: 发布版本，优化性能，启用代码混淆
+### Build Variants
 
-### 常用 Gradle 命令
+The project supports the following build variants:
+
+- **debug**: Debug build with logging and debug tools enabled
+- **release**: Release build with performance optimization and code obfuscation
+
+### Useful Gradle Commands
 
 ```bash
-# 清理构建
+# Clean build
 ./gradlew clean
 
-# 构建调试版本
+# Build debug APK
 ./gradlew assembleDebug
 
-# 构建发布版本
+# Build release APK
 ./gradlew assembleRelease
 
-# 运行单元测试
+# Run unit tests
 ./gradlew test
 
-# 运行仪器化测试
+# Run instrumented tests
 ./gradlew connectedAndroidTest
 
-# 生成测试覆盖率报告
-./gradlew jacocoTestReport
-
-# 检查代码问题
+# Lint check
 ./gradlew lint
-
-# 格式化代码
-./gradlew ktlintFormat
 ```
 
-### 代码规范
+### Code Style
 
-- 遵循 [Kotlin 官方代码风格](https://kotlinlang.org/docs/coding-conventions.html)
-- 使用有意义的变量和函数命名
-- 添加必要的注释和文档
-- 保持函数职责单一
-- 使用 Compose 最佳实践
+- Follow the [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
+- Use meaningful variable and function names
+- Add necessary comments and documentation
+- Keep functions focused on a single responsibility
+- Follow Compose best practices
 
-### 调试技巧
+### Debugging Tips
 
-1. **启用日志**: 在 debug 版本中，应用会输出详细日志
-2. **Layout Inspector**: 使用 Android Studio 的 Layout Inspector 检查 Compose UI
-3. **Network Profiler**: 监控网络请求和响应
-4. **Database Inspector**: 查看 DataStore 数据
+1. **Enable Logging**: Debug builds output detailed logs
+2. **Layout Inspector**: Use Android Studio's Layout Inspector to inspect Compose UI
+3. **Network Profiler**: Monitor network requests and responses
+4. **Logcat**: View runtime logs, filter by the `NetworkClient` tag for network requests
 
-## 🧪 测试
+## 🧪 Testing
 
-### 单元测试
+### Unit Tests
 
 ```bash
 ./gradlew test
 ```
 
-测试报告位置：`app/build/reports/tests/testDebugUnitTest/index.html`
+Test reports: `app/build/reports/tests/testDebugUnitTest/index.html`
 
-### 仪器化测试
+### Instrumented Tests
 
 ```bash
-# 需要连接设备或模拟器
+# Requires a connected device or emulator
 ./gradlew connectedAndroidTest
 ```
 
-### UI 测试
+### UI Tests
 
-使用 Compose Testing API 进行 UI 测试：
+Using the Compose Testing API for UI tests:
 
 ```kotlin
-@Test
-fun testBookListDisplay() {
-    composeTestRule.setContent {
-        BookListScreen()
+@RunWith(AndroidJUnit4::class)
+class ExampleInstrumentedTest {
+    @Test
+    fun testAppLaunch() {
+        // Example instrumented test
     }
-    
-    composeTestRule.onNodeWithText("Book Title").assertIsDisplayed()
 }
 ```
 
-## 📊 性能优化
+## 📊 Performance Optimization
 
-### 已实施的优化
+### Optimizations Applied
 
-- **🖼️ 图片优化**: Coil 自动缓存和压缩图片
-- **📡 网络优化**: Ktor 连接池、请求合并、超时控制
-- **💾 本地缓存**: DataStore 持久化用户偏好和阅读进度
-- **🔋 电量优化**: 协程结构化并发，避免内存泄漏
-- **🎨 UI 优化**: Compose 重组优化、懒加载列表
-- **📦 APK 大小**: ProGuard/R8 代码 shrinker
+- **🖼️ Image Optimization**: Coil automatic caching and image loading optimization
+- **📡 Network Optimization**: Ktor connection pooling, timeout control (connect/read timeout 30s)
+- **💾 Local Caching**: DataStore persistence for user preferences and reading progress
+- **🔋 Battery Optimization**: Structured concurrency with viewModelScope to prevent memory leaks
+- **🎨 UI Optimization**: Compose recomposition optimization, lazy loading lists
+- **📦 APK Size**: ProGuard/R8 code shrinking
+- **🔍 Search Debounce**: 300ms debounce on search input to reduce unnecessary API calls
 
-### 性能指标
+### Performance Benchmarks
 
-- 冷启动时间：< 2 秒
-- 首屏渲染：< 500ms
-- 列表滚动：60 FPS
-- 内存占用：< 100MB（典型场景）
+- Cold start time: < 2 seconds
+- First paint: < 500ms
+- List scrolling: 60 FPS
+- Memory usage: < 100MB (typical scenarios)
 
-## 🔒 安全特性
+## 🔒 Security Features
 
-- **🔐 HTTPS**: 所有网络通信使用 HTTPS
-- **🔑 Token 管理**: JWT Token 安全存储和自动刷新
-- **🛡️ 数据加密**: 敏感数据使用 Security Crypto 加密
-- **🚫 权限最小化**: 仅请求必要的系统权限
-- **📝 输入验证**: 防止注入攻击
+- **🔐 Network Communication**: HTTPS support, HTTP allowed for development (`usesCleartextTraffic`)
+- **🔑 Token Management**: JWT token securely stored via AuthStore and automatically attached to
+  request headers
+- **🛡️ Data Encryption**: Sensitive data encrypted using Security Crypto
+- **🚫 Minimal Permissions**: Only INTERNET and ACCESS_NETWORK_STATE permissions requested
+- **📝 Input Validation**: Client-side input validation
 
-## 📱 兼容性
+## 📱 Compatibility
 
-### 支持的 Android 版本
+### Supported Android Versions
 
-- **最低版本**: Android 7.0 (API 24)
-- **目标版本**: Android 15 (API 36)
-- **推荐版本**: Android 10+ (API 29+)
+- **Minimum**: Android 7.0 (API 24)
+- **Target**: Android 15 (API 36)
+- **Recommended**: Android 10+ (API 29+)
 
-### 屏幕适配
+### Screen Adaptation
 
-- 支持手机和平板
-- 自适应布局
-- 横竖屏切换支持
+- Phone and tablet support
+- Adaptive layouts
+- Portrait and landscape orientation support
 
-### 架构支持
+### CPU Architectures
 
 - armeabi-v7a
 - arm64-v8a
 - x86
 - x86_64
 
-## 🐛 常见问题
+## 🐛 FAQ
 
-### 1. Gradle 同步失败
+### 1. Gradle sync failed
 
-**解决方案**:
-- 检查网络连接
-- 清除 Gradle 缓存：`./gradlew clean`
-- 更新 Android Studio 到最新版本
-- 检查 JDK 版本是否正确
+**Solution**:
 
-### 2. 无法连接后端 API
+- Check your network connection
+- Clear Gradle cache: `./gradlew clean`
+- Update Android Studio to the latest version
+- Verify JDK version is 11 or higher
 
-**解决方案**:
-- 检查 `ApiConfig.BASE_URL` 配置
-- 确认后端服务正在运行
-- 检查网络连接和防火墙设置
-- 查看 Logcat 中的网络错误日志
+### 2. Cannot connect to backend API
 
-### 3. 应用崩溃
+**Solution**:
 
-**解决方案**:
-- 查看 Logcat 日志
-- 检查设备 Android 版本是否满足最低要求
-- 确保有足够的存储空间
-- 尝试清除应用数据后重新安装
+- Verify the `BASE_URL` configuration
+  in [NetworkClient.kt](app/src/main/java/com/qianrenni/reading/data/api/NetworkClient.kt)
+- Ensure the backend service is running
+- Check network connectivity and firewall settings
+- Check Logcat for network errors under the `NetworkClient` tag
 
-### 4. 图片加载失败
+### 3. App crashes
 
-**解决方案**:
-- 检查网络连接
-- 确认图片 URL 可访问
-- 清除 Coil 缓存：设置 → 清除缓存
+**Solution**:
 
-## 📦 发布流程
+- Check Logcat for crash logs
+- Verify the device meets minimum requirements (API 24+)
+- Ensure sufficient storage space
+- Try clearing app data and reinstalling
 
-### 1. 生成签名密钥
+### 4. Image loading fails
+
+**Solution**:
+
+- Check network connectivity
+- Verify the image URL is accessible
+- Restart the app
+
+## 📦 Release Process
+
+### 1. Generate a Signing Key
 
 ```bash
 keytool -genkey -v -keystore release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias release
 ```
 
-### 2. 配置签名
+### 2. Configure Signing
 
-在 `local.properties` 中添加签名信息（见上文配置步骤）。
+Add signing information in `local.properties` (see configuration steps above).
 
-### 3. 构建发布版本
+### 3. Build Release APK
 
 ```bash
 ./gradlew assembleRelease
 ```
 
-APK 位置：`app/build/outputs/apk/release/app-release.apk`
+APK location: `app/build/outputs/apk/release/app-release.apk`
 
-### 4. 测试发布版本
+### 4. Test the Release Build
 
-在真实设备上全面测试后再发布。
+Thoroughly test on real devices before publishing.
 
-### 5. 上传到应用商店
+### 5. Upload to App Stores
 
 - Google Play Store
-- 华为应用市场
-- 小米应用商店
-- 其他国内应用市场
+- Huawei AppGallery
+- Xiaomi App Store
+- Other Chinese app stores
 
-## 🤝 贡献指南
+## 🤝 Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Issues and Pull Requests are welcome!
 
-### 贡献流程
+### Contribution Workflow
 
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### 代码规范
+### Code Standards
 
-- 遵循 Kotlin 官方代码风格
-- 使用 Compose 最佳实践
-- 添加必要的注释和文档
-- 确保测试通过
-- 保持提交信息清晰
+- Follow Kotlin official coding conventions
+- Use Compose best practices
+- Add necessary comments and documentation
+- Ensure tests pass
+- Keep commit messages clear and descriptive
 
-## 📄 许可证
+## 📄 License
 
 ISC License
 
-## 👥 联系方式
+## 👥 Contact
 
-- **作者**: qianrenni
-- **邮箱**: 2112183503@qq.com
-- **项目主页**: [GUGA Reading](https://github.com/Qianrenni/guga_reading)
+- **Author**: qianrenni
+- **Email**: 2112183503@qq.com
+- **Project Homepage**: [GUGA Reading](https://github.com/Qianrenni/guga_reading)
 
-## 🔗 相关链接
+## 🔗 Related Links
 
-- [GUGA Reading Web 版](http://49.235.107.221)
-- [作者端](http://49.235.107.221/author/#)
-- [管理端](http://49.235.107.221/admin/#)
-- [后端 API 文档](http://localhost:8000/docs)
-- [Jetpack Compose 官方文档](https://developer.android.com/jetpack/compose)
-- [Kotlin 官方文档](https://kotlinlang.org/docs/home.html)
+- [GUGA Reading Web App](http://49.235.107.221)
+- [Author Portal](http://49.235.107.221/author/#)
+- [Admin Portal](http://49.235.107.221/admin/#)
+- [Backend API Docs](http://49.235.107.221:8000/docs)
+- [Jetpack Compose Documentation](https://developer.android.com/jetpack/compose)
+- [Kotlin Documentation](https://kotlinlang.org/docs/home.html)
 
 ---
 
-**注意**: 本项目仅供学习交流使用，请勿用于商业用途。
+**Note**: This project is for educational purposes only. Do not use for commercial purposes.
