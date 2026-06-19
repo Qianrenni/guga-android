@@ -47,9 +47,20 @@ fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) 
     LaunchedEffect(isLogin) {
         if (!isLogin) {
             // 避免重复跳转导致栈溢出，可以检查当前目的地
-            navController.currentBackStackEntry?.destination?.route?.let {
-                if (!excludeRoutes.contains(it)) {
-                    authViewModel.setRedirectUrl(it)
+            navController.currentBackStackEntry?.let { entry ->
+                val route = entry.destination.route
+                if (route != null && !excludeRoutes.contains(route)) {
+                    // 将路由模板中的 {placeholder} 替换为实际参数值，构造真实 URL
+                    val actualUrl = if (entry.arguments != null) {
+                        var url = route
+                        entry.arguments?.keySet()?.forEach { key ->
+                            url = url?.replace("{$key}", entry.arguments?.getString(key) ?: "")
+                        }
+                        url
+                    } else {
+                        route
+                    }
+                    authViewModel.setRedirectUrl(actualUrl ?: "home")
                     navController.navigate("login") {
                         // 清除返回栈，防止用户按后退键回到受保护页面
                         popUpTo(navController.graph.startDestinationId) {

@@ -75,7 +75,11 @@ fun CatalogDrawer(
             items(sortedCatalog, key = { it.id }) { item ->
                 val isSelected = item.id == currentChapterId
                 Column(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface
+                        )
                 ) {
                     Text(
                         text = item.title,
@@ -83,9 +87,6 @@ fun CatalogDrawer(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
-                            .background(
-                                if (isSelected) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface
-                            )
                             .fillMaxWidth()
                             .clickable {
                                 onChapterSelected(item.id)
