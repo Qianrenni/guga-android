@@ -252,6 +252,9 @@ class BookReadViewModel(
                     )
                 )
             }
+            result.onFailure { _, _, _ ->
+                _uiState.update { it.copy(pageStatus = it.pageStatus.error("无法获取章节内容")) }
+            }
         }
     }
 

@@ -8,13 +8,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,12 +31,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.qianrenni.reading.components.BookItem
+import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.viewmodels.book.HomeViewModel
 
 @Composable
@@ -46,7 +58,7 @@ fun HomeView(
         }
     }
 
-    //  监听滚动状态，自动加载更多
+    //  监听滚动状态，自动加载更多（仅非搜索模式）
     LaunchedEffect(gridState, uiState.selectedCategory) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .collect { lastVisibleIndex ->
@@ -63,28 +75,116 @@ fun HomeView(
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // 分类选择栏
-            CategorySelector(
-                categories = uiState.categories,
-                selectedCategory = uiState.selectedCategory,
-                onCategorySelected = viewModel::selectCategory //  通过 ViewModel 更新
+            // 搜索输入框
+            SearchBar(
+                query = uiState.searchQuery,
+                isSearching = uiState.isSearching,
+                onQueryChanged = viewModel::onSearchQueryChanged,
+                onClear = viewModel::clearSearch,
             )
-            // 书籍网格列表
-            Box(modifier = Modifier.weight(1f)) {
-                LazyVerticalStaggeredGrid(
-                    columns = StaggeredGridCells.Adaptive(160.dp),
-                    state = gridState,
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    items(uiState.books, key = { it.id }) { book ->
-                        BookItem(
-                            book = book,
-                            onClick = {
-                                navController.navigate("book/${book.id}")
-                            }
-                        )
-                    }
+
+            // 当搜索框为空时，显示分类选择栏和分类书籍
+            if (uiState.searchQuery.isBlank()) {
+                // 分类选择栏
+                CategorySelector(
+                    categories = uiState.categories,
+                    selectedCategory = uiState.selectedCategory,
+                    onCategorySelected = viewModel::selectCategory
+                )
+                // 分类书籍网格
+                BookGrid(
+                    books = uiState.books,
+                    gridState = gridState,
+                    navController = navController,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                // 搜索模式：显示搜索结果
+                BookGrid(
+                    books = uiState.searchResults,
+                    gridState = gridState,
+                    navController = navController,
+                    isSearchResult = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchBar(
+    query: String,
+    isSearching: Boolean,
+    onQueryChanged: (String) -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChanged,
+        modifier = modifier.fillMaxWidth(),
+        placeholder = { Text("搜索书籍(书名或者作者名)") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "搜索"
+            )
+        },
+        trailingIcon = {
+            if (isSearching) {
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(4.dp),
+                    strokeWidth = 2.dp
+                )
+            } else if (query.isNotEmpty()) {
+                IconButton(onClick = onClear) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "清除搜索"
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+    )
+}
+
+@Composable
+private fun BookGrid(
+    modifier: Modifier = Modifier,
+    books: List<Book>,
+    gridState: androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState,
+    navController: NavController,
+    isSearchResult: Boolean = false,
+) {
+    Box(modifier = modifier) {
+        if (books.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (isSearchResult) "未找到相关书籍" else "",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Adaptive(160.dp),
+                state = gridState,
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                items(books, key = { it.id }) { book ->
+                    BookItem(
+                        book = book,
+                        onClick = {
+                            navController.navigate("book/${book.id}")
+                        }
+                    )
                 }
             }
         }
