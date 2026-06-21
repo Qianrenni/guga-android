@@ -33,17 +33,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.qianrenni.reading.BookInfo
+import com.qianrenni.reading.BookRead
 import com.qianrenni.reading.components.BookItem
 import com.qianrenni.reading.components.CommonPage
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.Catalog
+import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.viewmodels.book.BookInfoViewModel
 
 @Composable
 fun BookInfoView(
-    navController: NavController,
+    navigator: Navigator,
     bookId: Int,
     viewModel: BookInfoViewModel = viewModel()
 ) {
@@ -55,7 +57,7 @@ fun BookInfoView(
     CommonPage(
         uiState = uiState,
         refresh = { viewModel.loadBookInfo(bookId) },
-        navController = navController
+        navigator = navigator
     )
     {
         uiState.book?.let { book ->
@@ -92,7 +94,7 @@ fun BookInfoView(
                             CatalogList(
                                 catalog = uiState.catalog,
                                 bookId = book.id,
-                                navController = navController
+                                navigator = navigator
                             )
                         }
                     }
@@ -103,7 +105,7 @@ fun BookInfoView(
                     RelatedBooksSection(
                         relatedBooks = uiState.relatedBooks,
                         onBookClick = { clickedBook ->
-                            navController.navigate("book/${clickedBook.id}")
+                            navigator.navigate(BookInfo(bookId = clickedBook.id))
                         }
                     )
                 }
@@ -229,7 +231,7 @@ private fun BookInfoTabs(
 private fun CatalogList(
     catalog: List<Catalog>,
     bookId: Int,
-    navController: NavController
+    navigator: Navigator
 ) {
     LazyColumn(
         modifier = Modifier
@@ -242,7 +244,7 @@ private fun CatalogList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        navController.navigate("read/$bookId/${item.id}")
+                        navigator.navigate(BookRead(bookId = bookId, chapterId = item.id))
                     }
                     .padding(8.dp),
                 style = MaterialTheme.typography.bodyMedium,

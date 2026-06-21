@@ -17,7 +17,6 @@ securityCrypto = "1.1.0-alpha06"
 coroutines = "1.11.0"
 nav3Core = "1.1.3"
 lifecycleViewmodelNav3 = "2.11.0"
-kotlinSerialization = "2.2.21"
 kotlinxSerializationCore = "1.9.0"
 material3AdaptiveNav3 = "1.3.0-rc01"
 [libraries]

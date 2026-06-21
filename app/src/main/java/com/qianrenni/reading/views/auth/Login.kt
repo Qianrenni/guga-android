@@ -28,17 +28,28 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import com.qianrenni.reading.ForgetPassword
+import com.qianrenni.reading.Home
+import com.qianrenni.reading.Register
 import com.qianrenni.reading.components.CaptchaImage
+import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.util.SnackBarManager
+import com.qianrenni.reading.viewmodels.auth.AuthViewModel
 import com.qianrenni.reading.viewmodels.auth.LoginViewModel
 
 @Composable
 fun LoginView(
-    navController: NavController,
+    navigator: Navigator,
+    authViewModel: AuthViewModel = viewModel(),
     viewModel: LoginViewModel = viewModel()
 ) {
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
+    val isLogin by authViewModel.isLogin.collectAsStateWithLifecycle()
+    LaunchedEffect(isLogin) {
+        if (isLogin) {
+            navigator.navigate(Home)
+        }
+    }
     LaunchedEffect(loginState.error) {
         loginState.error?.let { error ->
             SnackBarManager.showMessage(error)
@@ -120,7 +131,7 @@ fun LoginView(
                     Text("记住我")
                 }
                 TextButton(onClick = {
-                    navController.navigate("forget-password")
+                    navigator.navigate(ForgetPassword)
                 }) {
                     Text(text = "忘记密码?")
                 }
@@ -141,7 +152,7 @@ fun LoginView(
             }
 
             TextButton(onClick = {
-                navController.navigate("register")
+                navigator.navigate(Register)
             }) {
                 Text(text = "没有账号? 立即注册")
             }

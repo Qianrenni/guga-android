@@ -3,6 +3,7 @@ package com.qianrenni.reading.views.book
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -44,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextMeasurer
@@ -58,8 +58,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.qianrenni.reading.BookInfo
 import com.qianrenni.reading.R
 import com.qianrenni.reading.components.BottomControlBar
 import com.qianrenni.reading.components.CatalogDrawer
@@ -68,6 +68,7 @@ import com.qianrenni.reading.components.InfiniteHorizontalPager
 import com.qianrenni.reading.components.ReadingSettings
 import com.qianrenni.reading.data.model.ReadSettings
 import com.qianrenni.reading.data.store.SettingsRepository
+import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.util.SystemBarUtils
 import com.qianrenni.reading.viewmodels.book.BookReadViewModel
 import kotlinx.coroutines.Dispatchers
@@ -153,13 +154,13 @@ suspend fun measureText(
 @Composable
 fun BookReadView(
     context: Context,
-    navController: NavController,
+    navigator: Navigator,
     bookId: Int,
-    chapterId: Int = -1,
+    chapterId: Int,
     viewModel: BookReadViewModel = viewModel()
 ) {
 
-    val activity = LocalContext.current as Activity
+    val activity = LocalActivity.current as Activity
     val uiState by viewModel.uiState.collectAsState()
     LaunchedEffect(Unit) {
         viewModel.loadBookAndCatalog(bookId, chapterId)
@@ -212,7 +213,7 @@ fun BookReadView(
         refresh = {
             viewModel.loadBookAndCatalog(bookId, chapterId)
         },
-        navController = navController
+        navigator = navigator
     ) {
         Box(
             modifier = Modifier
@@ -344,7 +345,7 @@ fun BookReadView(
                                         maxLines = 1
                                     )
                                 }
-                                IconButton(onClick = { navController.navigate("book/${uiState.book?.id}") }) {
+                                IconButton(onClick = { navigator.navigate(BookInfo(bookId = uiState.book?.id!!)) }) {
                                     Icon(Icons.Default.ChevronRight, "goToDetail")
                                 }
 

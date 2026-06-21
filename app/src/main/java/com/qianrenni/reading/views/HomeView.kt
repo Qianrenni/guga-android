@@ -37,14 +37,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import com.qianrenni.reading.BookInfo
 import com.qianrenni.reading.components.BookItem
 import com.qianrenni.reading.data.model.Book
+import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.viewmodels.book.HomeViewModel
 
 @Composable
 fun HomeView(
-    navController: NavController,
+    navigator: Navigator,
     viewModel: HomeViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -95,7 +96,7 @@ fun HomeView(
                 BookGrid(
                     books = uiState.books,
                     gridState = gridState,
-                    navController = navController,
+                    navigator = navigator,
                     modifier = Modifier.weight(1f)
                 )
             } else {
@@ -103,7 +104,7 @@ fun HomeView(
                 BookGrid(
                     books = uiState.searchResults,
                     gridState = gridState,
-                    navController = navController,
+                    navigator = navigator,
                     isSearchResult = true,
                     modifier = Modifier.weight(1f)
                 )
@@ -156,7 +157,7 @@ private fun BookGrid(
     modifier: Modifier = Modifier,
     books: List<Book>,
     gridState: androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState,
-    navController: NavController,
+    navigator: Navigator,
     isSearchResult: Boolean = false,
 ) {
     Box(modifier = modifier) {
@@ -182,7 +183,7 @@ private fun BookGrid(
                     BookItem(
                         book = book,
                         onClick = {
-                            navController.navigate("book/${book.id}")
+                            navigator.navigate(BookInfo(bookId = book.id))
                         }
                     )
                 }

@@ -30,17 +30,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.qianrenni.reading.BookRead
 import com.qianrenni.reading.R
 import com.qianrenni.reading.components.CommonPage
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.BookReadingProgress
+import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.viewmodels.book.HistoryViewModel
 
 @Composable
 fun ReadingHistoryView(
-    navController: NavController,
+    navigator: Navigator,
     viewModel: HistoryViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -50,7 +51,7 @@ fun ReadingHistoryView(
     CommonPage(
         uiState = uiState,
         refresh = { viewModel.loadHistory() },
-        navController = navController
+        navigator = navigator
     ) {
         LazyColumn(
             modifier = Modifier
@@ -64,7 +65,7 @@ fun ReadingHistoryView(
                     book = uiState.books[item],
                     isInShelf = uiState.shelfIds.contains(uiState.books[item].id),
                     onClick = { bookId, chapterId ->
-                        navController.navigate("read/$bookId/$chapterId")
+                        navigator.navigate(BookRead(bookId = bookId, chapterId = chapterId))
                     },
                     onDelete = {
                         viewModel.deleteHistory(it.bookId)

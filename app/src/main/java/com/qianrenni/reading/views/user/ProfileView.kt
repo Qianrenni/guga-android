@@ -17,13 +17,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.qianrenni.reading.Login
+import com.qianrenni.reading.UpdatePassword
+import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.viewmodels.auth.AuthViewModel
 
 @Composable
 fun ProfileView(
-    navController: NavController,
+    navigator: Navigator,
     authViewModel: AuthViewModel = viewModel()
 ) {
     val user by authViewModel.getUser().collectAsStateWithLifecycle()
@@ -91,7 +93,7 @@ fun ProfileView(
         // 修改密码按钮
         Button(
             onClick = {
-                navController.navigate("update-password")
+                navigator.navigate(UpdatePassword)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -102,6 +104,7 @@ fun ProfileView(
         Button(
             onClick = {
                 authViewModel.clear()
+                navigator.navigate(Login)
             },
             modifier = Modifier.fillMaxWidth()
         ) {

@@ -33,24 +33,25 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.qianrenni.reading.BookRead
 import com.qianrenni.reading.R
 import com.qianrenni.reading.components.CommonPage
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.data.model.ShelfItem
+import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.viewmodels.book.ShelfViewModel
 
 @Composable
 fun BookShelfView(
-    navController: NavController,
+    navigator: Navigator,
     viewModel: ShelfViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
         viewModel.loadShelf()
     }
-    CommonPage(uiState, refresh = { viewModel.loadShelf() }, navController = navController) {
+    CommonPage(uiState, refresh = { viewModel.loadShelf() }, navigator = navigator) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -65,7 +66,7 @@ fun BookShelfView(
                     shelfItem = uiState.shelfItems[index],
                     book = uiState.books[index],
                     onClick = { bookId, chapterId ->
-                        navController.navigate("read/$bookId/$chapterId")
+                        navigator.navigate(BookRead(bookId = bookId, chapterId = chapterId))
                     },
                     onDelete = {
                         viewModel.removeFromShelf(it.bookId)

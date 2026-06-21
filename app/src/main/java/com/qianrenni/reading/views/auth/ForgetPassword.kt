@@ -18,7 +18,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -27,17 +26,17 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import com.qianrenni.reading.Login
+import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.ForgetPasswordViewModel
 
 @Composable
 fun ForgetPasswordView(
-    navController: NavController,
+    navigator: Navigator,
     viewModel: ForgetPasswordViewModel = viewModel()
 ) {
     val forgetPasswordState by viewModel.forgetPasswordState.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
     LaunchedEffect(forgetPasswordState.pageStatus.errorMessage) {
         forgetPasswordState.pageStatus.errorMessage?.let { error ->
             SnackBarManager.showMessage(error)
@@ -140,9 +139,7 @@ fun ForgetPasswordView(
             }
 
             TextButton(onClick = {
-                navController.navigate("login") {
-                    popUpTo("forget-password") { inclusive = true }
-                }
+                navigator.navigate(Login)
             }) {
                 Text(text = "返回登录")
             }

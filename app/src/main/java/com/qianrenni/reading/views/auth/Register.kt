@@ -28,15 +28,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import com.qianrenni.reading.Login
 import com.qianrenni.reading.components.CaptchaImage
+import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.RegisterViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterView(
-    navController: NavController,
+    navigator: Navigator,
     viewModel: RegisterViewModel = viewModel()
 ) {
     val registerState by viewModel.registerState.collectAsStateWithLifecycle()
@@ -166,9 +167,7 @@ fun RegisterView(
                             scope.launch {
                                 SnackBarManager.showMessage("注册成功，请登录")
                             }
-                            navController.navigate("login") {
-                                popUpTo("register") { inclusive = true }
-                            }
+                            navigator.navigate(Login)
                         }
                     )
                 },
@@ -183,9 +182,7 @@ fun RegisterView(
             }
 
             TextButton(onClick = {
-                navController.navigate("login") {
-                    popUpTo("register") { inclusive = true }
-                }
+                navigator.navigate(Login)
             }) {
                 Text(text = "已有账号？立即登录")
             }

@@ -64,6 +64,7 @@ class BookReadViewModel(
     fun clear() {
         synchronized(lock) {
             chaptersCache.evictAll()
+            currentChapterPageIndex = 0
             _uiState.update { it.copy(pages = emptyList()) }
         }
     }
@@ -252,8 +253,18 @@ class BookReadViewModel(
                     )
                 )
             }
-            result.onFailure { _, _, _ ->
-                _uiState.update { it.copy(pageStatus = it.pageStatus.error("无法获取章节内容")) }
+            result.onFailure { text, code, _ ->
+                _uiState.update {
+                    it.copy(
+                        pageStatus = it.pageStatus.error(
+                            if (code == 429) {
+                                text
+                            } else {
+                                "加载失败"
+                            }
+                        )
+                    )
+                }
             }
         }
     }
@@ -266,6 +277,14 @@ class BookReadViewModel(
         loadChapter(catalog[updateCurrentIndex].id)
         _uiState.update { it.copy(currentIndex = updateCurrentIndex) }
         currentChapterPageIndex = 0
+        viewModelScope.launch(Dispatchers.IO) {
+            ReadingProgressService.updateReadingProgress(
+                UpdateProgressRequest(
+                    bookId = uiState.value.book?.id ?: -1,
+                    lastChapterId = catalog[updateCurrentIndex].id
+                )
+            )
+        }
         refreshPages()
     }
 
@@ -274,6 +293,14 @@ class BookReadViewModel(
         loadChapter(chapterId)
         _uiState.update { it.copy(currentIndex = targetIndex) }
         currentChapterPageIndex = 0
+        viewModelScope.launch(Dispatchers.IO) {
+            ReadingProgressService.updateReadingProgress(
+                UpdateProgressRequest(
+                    bookId = uiState.value.book?.id ?: -1,
+                    lastChapterId = chapterId
+                )
+            )
+        }
         refreshPages()
     }
 
