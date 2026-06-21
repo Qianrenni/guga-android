@@ -24,7 +24,12 @@ class AuthViewModel : ViewModel() {
         AuthStore.redirectUrl = url
     }
 
-    fun getRedirectUrl() = AuthStore.redirectUrl
+    fun getRedirectUrl(): String? {
+        val res = AuthStore.redirectUrl
+        AuthStore.redirectUrl = null
+        return res
+    }
+
     fun getUser() = AuthStore.user
     fun clear() {
         AuthStore.clear()

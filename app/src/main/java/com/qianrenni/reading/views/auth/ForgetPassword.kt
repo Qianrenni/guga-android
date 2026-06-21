@@ -27,13 +27,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import com.qianrenni.reading.AuthNavController
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.ForgetPasswordViewModel
 
 @Composable
 fun ForgetPasswordView(
-    navController: NavController,
+    navController: AuthNavController,
     viewModel: ForgetPasswordViewModel = viewModel()
 ) {
     val forgetPasswordState by viewModel.forgetPasswordState.collectAsStateWithLifecycle()

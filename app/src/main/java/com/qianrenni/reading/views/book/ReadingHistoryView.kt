@@ -30,8 +30,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.qianrenni.reading.AuthNavController
 import com.qianrenni.reading.R
 import com.qianrenni.reading.components.CommonPage
 import com.qianrenni.reading.data.model.Book
@@ -40,7 +40,7 @@ import com.qianrenni.reading.viewmodels.book.HistoryViewModel
 
 @Composable
 fun ReadingHistoryView(
-    navController: NavController,
+    navController: AuthNavController,
     viewModel: HistoryViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

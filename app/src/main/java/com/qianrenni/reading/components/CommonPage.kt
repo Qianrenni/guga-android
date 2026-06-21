@@ -12,7 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
+import com.qianrenni.reading.AuthNavController
 import com.qianrenni.reading.common.CommonUiState
 
 
@@ -21,7 +21,7 @@ fun CommonPage(
     uiState: CommonUiState,
     modifier: Modifier = Modifier,
     refresh: () -> Unit = {},
-    navController: NavController? = null,
+    navController: AuthNavController? = null,
     content: @Composable () -> Unit
 ) {
     Surface(

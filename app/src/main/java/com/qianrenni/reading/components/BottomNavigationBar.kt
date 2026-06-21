@@ -11,8 +11,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
+import com.qianrenni.reading.AuthNavController
 
 data class BottomNavItem(
     val route: String,
@@ -21,7 +20,7 @@ data class BottomNavItem(
 )
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
+fun BottomNavigationBar(navController: AuthNavController) {
     val items = listOf(
         BottomNavItem("home", "书城", Icons.Default.Home),
         BottomNavItem("bookshelf", "书架", Icons.AutoMirrored.Filled.LibraryBooks),

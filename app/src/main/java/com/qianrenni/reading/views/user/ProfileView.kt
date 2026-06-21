@@ -17,13 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.qianrenni.reading.AuthNavController
 import com.qianrenni.reading.viewmodels.auth.AuthViewModel
 
 @Composable
 fun ProfileView(
-    navController: NavController,
+    navController: AuthNavController,
     authViewModel: AuthViewModel = viewModel()
 ) {
     val user by authViewModel.getUser().collectAsStateWithLifecycle()

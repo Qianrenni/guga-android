@@ -58,8 +58,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.qianrenni.reading.AuthNavController
 import com.qianrenni.reading.R
 import com.qianrenni.reading.components.BottomControlBar
 import com.qianrenni.reading.components.CatalogDrawer
@@ -153,7 +153,7 @@ suspend fun measureText(
 @Composable
 fun BookReadView(
     context: Context,
-    navController: NavController,
+    navController: AuthNavController,
     bookId: Int,
     chapterId: Int = -1,
     viewModel: BookReadViewModel = viewModel()

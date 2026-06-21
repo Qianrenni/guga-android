@@ -37,14 +37,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import com.qianrenni.reading.AuthNavController
 import com.qianrenni.reading.components.BookItem
 import com.qianrenni.reading.data.model.Book
 import com.qianrenni.reading.viewmodels.book.HomeViewModel
 
 @Composable
 fun HomeView(
-    navController: NavController,
+    navController: AuthNavController,
     viewModel: HomeViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -156,7 +156,7 @@ private fun BookGrid(
     modifier: Modifier = Modifier,
     books: List<Book>,
     gridState: androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState,
-    navController: NavController,
+    navController: AuthNavController,
     isSearchResult: Boolean = false,
 ) {
     Box(modifier = modifier) {

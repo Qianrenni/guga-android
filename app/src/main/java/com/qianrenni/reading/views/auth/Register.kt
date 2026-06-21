@@ -28,7 +28,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import com.qianrenni.reading.AuthNavController
 import com.qianrenni.reading.components.CaptchaImage
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.RegisterViewModel
@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterView(
-    navController: NavController,
+    navController: AuthNavController,
     viewModel: RegisterViewModel = viewModel()
 ) {
     val registerState by viewModel.registerState.collectAsStateWithLifecycle()

@@ -33,8 +33,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.qianrenni.reading.AuthNavController
 import com.qianrenni.reading.components.BookItem
 import com.qianrenni.reading.components.CommonPage
 import com.qianrenni.reading.data.model.Book
@@ -43,7 +43,7 @@ import com.qianrenni.reading.viewmodels.book.BookInfoViewModel
 
 @Composable
 fun BookInfoView(
-    navController: NavController,
+    navController: AuthNavController,
     bookId: Int,
     viewModel: BookInfoViewModel = viewModel()
 ) {
@@ -229,7 +229,7 @@ private fun BookInfoTabs(
 private fun CatalogList(
     catalog: List<Catalog>,
     bookId: Int,
-    navController: NavController
+    navController: AuthNavController
 ) {
     LazyColumn(
         modifier = Modifier
