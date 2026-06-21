@@ -8,6 +8,7 @@ import com.qianrenni.reading.data.api.NetworkClient
 import com.qianrenni.reading.data.model.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 object AuthStore {
     private val _user = MutableStateFlow<User?>(null)
@@ -78,7 +79,7 @@ object AuthStore {
     }
 
     fun setUser(user: User?) {
-        _user.value = user
+        _user.update { user }
     }
 
     fun clear() {
