@@ -9,16 +9,15 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.util.fastAny
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberNavBackStack
 import com.qianrenni.reading.components.BottomNavigationBar
 import com.qianrenni.reading.util.SnackBarManager
 import com.qianrenni.reading.viewmodels.auth.AuthViewModel
@@ -32,10 +31,14 @@ import com.qianrenni.reading.views.book.BookReadView
 import com.qianrenni.reading.views.book.BookShelfView
 import com.qianrenni.reading.views.book.ReadingHistoryView
 import com.qianrenni.reading.views.user.ProfileView
+import kotlinx.serialization.Serializable
+
+@Serializable
+data object Home : NavKey
 
 @Composable
 fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) {
-    val navController = rememberNavController()
+    val backStack = rememberNavBackStack(Home)
     val excludeRoutes = listOf("login", "register", "forget-password")
     val isLogin by authViewModel.isLogin.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -43,42 +46,6 @@ fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) 
     // 定义需要显示底部导航栏的路由
     val routesWithBottomBar = listOf("home", "bookshelf", "history", "profile")
     val routesWithoutPadding = listOf("read")
-    // 2. 如果未登录，执行跳转
-    LaunchedEffect(isLogin) {
-        if (!isLogin) {
-            // 避免重复跳转导致栈溢出，可以检查当前目的地
-            navController.currentBackStackEntry?.let { entry ->
-                val route = entry.destination.route
-                if (route != null && !excludeRoutes.contains(route)) {
-                    // 将路由模板中的 {placeholder} 替换为实际参数值，构造真实 URL
-                    val actualUrl = if (entry.arguments != null) {
-                        var url = route
-                        entry.arguments?.keySet()?.forEach { key ->
-                            url = url?.replace("{$key}", entry.arguments?.getString(key) ?: "")
-                        }
-                        url
-                    } else {
-                        route
-                    }
-                    authViewModel.setRedirectUrl(actualUrl ?: "home")
-                    navController.navigate("login") {
-                        // 清除返回栈，防止用户按后退键回到受保护页面
-                        popUpTo(navController.graph.startDestinationId) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true
-                    }
-                }
-            }
-        } else {
-            navController.navigate(authViewModel.getRedirectUrl() ?: "home") {
-                popUpTo("login") {
-                    inclusive = true
-                }
-                launchSingleTop = true
-            }
-        }
-    }
     LaunchedEffect(Unit) {
         SnackBarManager.messages.collect { message ->
             snackBarHostState.showSnackbar(message)
@@ -86,10 +53,13 @@ fun AppNavigation(context: Context, authViewModel: AuthViewModel = viewModel()) 
     }
 
     // 获取当前路由以决定是否显示底部导航栏
-    val currentBackStackEntry = navController.currentBackStackEntryAsState()
-    val currentRoute = currentBackStackEntry.value?.destination?.route
+    val currentRoute by remember {
+        derivedStateOf {
+            backStack.last()
+        }
+    }
     val showBottomBar = currentRoute in routesWithBottomBar
-    val withOutPadding = routesWithoutPadding.fastAny { currentRoute?.startsWith(it) ?: false }
+    val withOutPadding = routesWithoutPadding.fastAny { currentRoute }
     Scaffold(
         modifier = Modifier.background(color = MaterialTheme.colorScheme.background),
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
