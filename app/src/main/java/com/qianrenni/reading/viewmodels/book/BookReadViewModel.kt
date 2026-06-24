@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.internal.notifyAll
 import okhttp3.internal.wait
+import kotlin.time.Duration.Companion.seconds
 
 data class BookChapter(val chapterId: Int, val chapterContent: String)
 data class PageChapterItem(
@@ -61,6 +62,7 @@ class BookReadViewModel(
     private var heartbeatJob: Job? = null
     var currentChapterPageIndex: Int = 0
 
+    private var restartJob: Job? = null
     fun clear() {
         synchronized(lock) {
             chaptersCache.evictAll()
@@ -69,7 +71,7 @@ class BookReadViewModel(
         }
     }
 
-    private fun catalogIndexToLoad(index: Int) {
+    fun catalogIndexToLoad(index: Int) {
         val catalog = uiState.value.catalog
         listOf(
             (index - 1 + catalog.size) % catalog.size,
@@ -185,12 +187,12 @@ class BookReadViewModel(
     fun loadBookAndCatalog(bookId: Int, initialChapterId: Int) {
         require(bookId > 0)
         require(initialChapterId > 0)
-        clear()
         val currentState = _uiState.value
         if (currentState.pageStatus.isLoading) {
             return
         }
         _uiState.update { it.copy(pageStatus = it.pageStatus.loading()) }
+        clear()
         viewModelScope.launch(Dispatchers.IO) {
             val bookJob = async { BookService.getBookById(bookId) }
             val catalogJob = async { BookService.getCatalog(bookId) }
@@ -199,7 +201,7 @@ class BookReadViewModel(
             bookResult.onSuccess { data ->
                 _uiState.update { it.copy(book = data) }
             }
-            bookResult.onFailure { text, code, throwable ->
+            bookResult.onFailure { text, _, _ ->
                 _uiState.update { it.copy(pageStatus = it.pageStatus.error(text)) }
             }
             catalogResult.onSuccess { data ->
@@ -231,7 +233,7 @@ class BookReadViewModel(
                     refreshPages()
                 }
             }
-            catalogResult.onFailure { text, code, throwable ->
+            catalogResult.onFailure { text, _, _ ->
                 _uiState.update { it.copy(pageStatus = it.pageStatus.error(text)) }
             }
         }
@@ -371,6 +373,16 @@ class BookReadViewModel(
     private fun stopHeartbeat() {
         heartbeatJob?.cancel()
         heartbeatJob = null
+    }
+
+    fun restart() {
+        restartJob?.cancel()
+        restartJob = viewModelScope.launch {
+            delay(1.seconds)
+            clear()
+            catalogIndexToLoad(uiState.value.currentIndex)
+            refreshPages()
+        }
     }
 
     override fun onCleared() {

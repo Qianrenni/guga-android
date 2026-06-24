@@ -373,6 +373,7 @@ fun BookReadView(
                                 viewModel.viewModelScope.launch(Dispatchers.IO) {
                                     settingsRepository.updateSettings(newSettings)
                                 }
+                                viewModel.restart()
                             },
                         )
                     }
