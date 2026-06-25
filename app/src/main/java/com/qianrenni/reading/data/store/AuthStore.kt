@@ -40,6 +40,7 @@ object AuthStore {
                 NetworkClient.setToken(savedRefreshToken, savedTokenType)
                 AuthService.refreshToken().onSuccess {
                     saveToken(prefs, it.accessToken, it.refreshToken, it.tokenType)
+                    NetworkClient.setToken(it.accessToken, it.tokenType)
                     setUser(it.user)
                 }
             }
