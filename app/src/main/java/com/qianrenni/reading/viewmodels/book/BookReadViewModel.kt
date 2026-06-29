@@ -255,15 +255,11 @@ class BookReadViewModel(
                     )
                 )
             }
-            result.onFailure { text, code, _ ->
+            result.onFailure { text, _, _ ->
                 _uiState.update {
                     it.copy(
                         pageStatus = it.pageStatus.error(
-                            if (code == 429) {
-                                text
-                            } else {
-                                "加载失败"
-                            }
+                            text
                         )
                     )
                 }

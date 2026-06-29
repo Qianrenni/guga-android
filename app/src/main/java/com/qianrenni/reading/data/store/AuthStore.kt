@@ -54,7 +54,7 @@ object AuthStore {
         tokenType: String,
         isSave: Boolean = true
     ) {
-        Log.d("TOKEN", "setToken:${accessToken} ${refreshToken} ${tokenType} ")
+        Log.d("TOKEN", "setToken:${accessToken} $refreshToken $tokenType ")
         NetworkClient.setToken(accessToken, tokenType)
         if (isSave) {
             saveToken(prefs, accessToken, refreshToken, tokenType)
