@@ -2,6 +2,7 @@ package com.qianrenni.reading.viewmodels.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation3.runtime.NavKey
 import com.qianrenni.reading.data.store.AuthStore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -18,15 +19,14 @@ class AuthViewModel : ViewModel() {
             started = SharingStarted.Eagerly, // 立即开始监听
             initialValue = false
         )
-
-
-    fun setRedirectUrl(url: String) {
-        AuthStore.redirectUrl = url
+    var redirectNavKey: NavKey? = null
+    fun setRedirectUrl(url: NavKey?) {
+        redirectNavKey = url
     }
 
-    fun getRedirectUrl(): String? {
-        val res = AuthStore.redirectUrl
-        AuthStore.redirectUrl = null
+    fun getRedirectUrl(): NavKey? {
+        val res = redirectNavKey
+        redirectNavKey = null
         return res
     }
 

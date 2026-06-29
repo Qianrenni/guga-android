@@ -29,26 +29,21 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qianrenni.reading.ForgetPassword
-import com.qianrenni.reading.Home
 import com.qianrenni.reading.Register
 import com.qianrenni.reading.components.CaptchaImage
 import com.qianrenni.reading.state.Navigator
 import com.qianrenni.reading.util.SnackBarManager
-import com.qianrenni.reading.viewmodels.auth.AuthViewModel
 import com.qianrenni.reading.viewmodels.auth.LoginViewModel
 
 @Composable
 fun LoginView(
     navigator: Navigator,
-    authViewModel: AuthViewModel = viewModel(),
     viewModel: LoginViewModel = viewModel()
 ) {
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
-    val isLogin by authViewModel.isLogin.collectAsStateWithLifecycle()
-    LaunchedEffect(isLogin) {
-        if (isLogin) {
-            navigator.navigate(Home)
-        }
+    LaunchedEffect(Unit) {
+        viewModel.start()
+
     }
     LaunchedEffect(loginState.error) {
         loginState.error?.let { error ->

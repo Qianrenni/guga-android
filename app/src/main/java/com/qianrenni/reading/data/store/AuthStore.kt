@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.update
 object AuthStore {
     private val _user = MutableStateFlow<User?>(null)
     val user = _user.asStateFlow()
-    var redirectUrl: String? = null
     private lateinit var prefs: SharedPreferences
 
     // 初始化方法，在 Application onCreate 中调用

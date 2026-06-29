@@ -127,8 +127,33 @@ class Navigator(val state: NavigationState) {
         if (route in state.backStacks.keys) {
             // This is a top level route, just switch to it.
             state.topLevelRoute = route
+            state.backStacks[state.topLevelRoute]?.removeIf { !state.backStacks.keys.contains(it) }
         } else {
             state.backStacks[state.topLevelRoute]?.add(route)
+        }
+    }
+
+    /**
+     * 替换当前栈顶路由（仅当栈深度 > 1 时替换，否则等同于 navigate）。
+     * 若目标为顶级路由，则直接切换顶级路由。
+     */
+    fun replace(route: NavKey) {
+        // 1. 目标是顶级路由 → 切换
+        if (route in state.backStacks.keys) {
+            state.topLevelRoute = route
+            state.backStacks[state.topLevelRoute]?.removeIf { !state.backStacks.keys.contains(it) }
+            return
+        }
+
+        // 2. 获取当前栈
+        val currentStack = state.backStacks[state.topLevelRoute] ?: return
+
+        // 3. 若栈深度 > 1，移除栈顶再添加新路由（替换）；否则直接添加（相当于 navigate）
+        if (currentStack.size > 1) {
+            currentStack.removeLastOrNull()
+            currentStack.add(route)
+        } else {
+            currentStack.add(route)
         }
     }
 

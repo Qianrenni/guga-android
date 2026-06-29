@@ -23,8 +23,7 @@ data class LoginState(
 class LoginViewModel : ViewModel() {
     private val _loginState = MutableStateFlow(LoginState())
     val loginState = _loginState.asStateFlow()
-
-    init {
+    fun start() {
         viewModelScope.launch(Dispatchers.IO) {
             AuthStore.initial()
         }
