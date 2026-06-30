@@ -23,10 +23,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,8 +51,11 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextIndent
@@ -89,7 +96,10 @@ suspend fun measureText(
     withContext(Dispatchers.Default) {
         val newPages = mutableListOf<List<String>>()
         var startIndex = 0
-        val totalLength = content.length
+        val processedContent =
+            content.split(Regex("\\s+")).filter { it.trim().isNotBlank() }
+                .joinToString(separator = "\n")
+        val totalLength = processedContent.length
         val paddingPx = with(density) { (2 * readSettings.fontSize).dp.toPx() }
         val tempIsIndent = MutableList(1) { true }
         while (startIndex < totalLength) {
@@ -103,12 +113,19 @@ suspend fun measureText(
             while (low <= high) {
                 val mid = (low + high) / 2
                 textToMeasure =
-                    content.substring(startIndex, mid)
+                    processedContent.substring(startIndex, mid)
                         .split("\n")
-                        .filter { it.isNotEmpty() }
+                        .filter { it.isNotBlank() }
                 val sumHeight = textToMeasure.mapIndexed { index, it ->
                     textMeasurer.measure(
-                        text = it,
+                        text = if (
+                            index == textToMeasure.size - 1
+                            && processedContent[mid.coerceIn(0, mid - 1)] != '\n'
+                        ) {
+                            it
+                        } else {
+                            "${it}中"
+                        },
                         style = TextStyle(
                             fontSize = readSettings.fontSize.sp,
                             lineHeight = readSettings.lineHeight.sp,
@@ -123,6 +140,7 @@ suspend fun measureText(
                             } else {
                                 TextIndent(firstLine = (readSettings.fontSize * 2).sp)
                             },
+                            textAlign = TextAlign.Justify
                         ),
                         constraints = Constraints(
                             maxWidth = widthPx.toInt(),
@@ -142,7 +160,12 @@ suspend fun measureText(
             best.let {
                 if (it.isNotEmpty()) {
                     newPages.add(best)
-                    tempIsIndent.add(it.last().last() == '\n')
+                    tempIsIndent.add(
+                        processedContent[bestFitIndex.coerceIn(
+                            0,
+                            bestFitIndex - 1
+                        )] == '\n'
+                    )
                 }  // 避免添加空页
             }
             startIndex = bestFitIndex
@@ -402,14 +425,23 @@ private fun ChapterPage(
     settings: ReadSettings,
     firstIndent: Boolean = false,
 ) {
+    val icon = "ChatBubbleOutline"
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy((2 * settings.fontSize).dp)
     ) {
         content.forEachIndexed { index, paragraph ->
+            // 1. 构建 AnnotatedString，在段落末尾插入占位符
+            val annotatedText = buildAnnotatedString {
+                append(paragraph)
+                // 插入内联内容的占位符
+                appendInlineContent(icon, alternateText = "[icon]")
+            }
             Text(
-                text = paragraph,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                text = annotatedText,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
                 style = TextStyle(
                     color = Color(settings.textColor),
                     fontSize = settings.fontSize.sp,
@@ -423,7 +455,25 @@ private fun ChapterPage(
                         }
 
                     } else TextIndent(firstLine = (settings.fontSize * 2).sp),
-                    fontFamily = settings.fontFamily
+                    fontFamily = settings.fontFamily,
+                    textAlign = TextAlign.Justify
+                ),
+                inlineContent = mapOf(
+                    icon to InlineTextContent(
+                        placeholder = Placeholder(
+                            width = settings.fontSize.sp,
+                            height = settings.fontSize.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.TextBottom
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.ChatBubbleOutline,
+                            contentDescription = "Chat Bubble Outline",
+                            modifier = Modifier
+                                .size(settings.fontSize.dp),
+                            tint = Color(settings.textColor)
+                        )
+                    },
                 )
             )
         }
